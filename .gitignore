@@ -1,0 +1,25 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+venv/
+ENV/
+env/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Models & local data
+models/
+*.onnx
+*.bin
+*.sqlite
+*.db
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
