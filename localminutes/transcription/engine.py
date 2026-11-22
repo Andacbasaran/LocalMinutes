@@ -1,4 +1,4 @@
-"""faster-whisper INT8 CPU + VAD transcription engine."""
+"""faster-whisper INT8 CPU + VAD transcription engine and local model cache helpers."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from localminutes.config import get_models_dir
 
 logger = logging.getLogger(__name__)
 
+WHISPER_MODELS = ["tiny", "base", "small", "medium", "large-v3-turbo"]
+
 # Common Whisper silence hallucinations to filter out
 _HALLUCINATION_PHRASES = {
     "altyazı",
@@ -26,6 +28,20 @@ _HALLUCINATION_PHRASES = {
     ".",
     "...",
 }
+
+
+def list_cached_models(download_root: Optional[Path] = None) -> set[str]:
+    """Return set of Whisper model names already present in the local cache directory."""
+    root = download_root or get_models_dir()
+    if not root.exists():
+        return set()
+    cached: set[str] = set()
+    entries = [p.name.lower() for p in root.iterdir()]
+    for model_name in WHISPER_MODELS:
+        token = model_name.lower()
+        if any(token in name for name in entries):
+            cached.add(model_name)
+    return cached
 
 
 class WhisperEngine:
@@ -95,3 +111,39 @@ class WhisperEngine:
         if joined.lower().strip(" .!?,") in _HALLUCINATION_PHRASES:
             return ""
         return joined
+
+    def transcribe_file_segments(
+        self,
+        file_path: Path | str,
+        on_progress: Optional[Callable[[float], None]] = None,
+        on_status: Optional[Callable[[str], None]] = None,
+        cancel_event: Optional[threading.Event] = None,
+    ) -> tuple[list[tuple[float, float, str]], float]:
+        """Transcribe an audio/video file, yielding timestamped (start, end, text) tuples + duration."""
+        if self._model is None:
+            self.load(on_status=on_status)
+
+        results: list[tuple[float, float, str]] = []
+        with self._lock:
+            assert self._model is not None
+            seg_iter, info = self._model.transcribe(
+                str(file_path),
+                language=self.language,
+                beam_size=2,
+                vad_filter=True,
+                vad_parameters={"min_silence_duration_ms": 500},
+                condition_on_previous_text=True,
+            )
+            duration = float(getattr(info, "duration", 0.0) or 0.0)
+            for seg in seg_iter:
+                if cancel_event and cancel_event.is_set():
+                    break
+                text = (seg.text or "").strip()
+                if text and text.lower().strip(" .!?,") not in _HALLUCINATION_PHRASES:
+                    results.append((round(float(seg.start), 2), round(float(seg.end), 2), text))
+                if on_progress and duration > 0:
+                    on_progress(min(1.0, float(seg.end) / duration))
+
+        if on_progress and not (cancel_event and cancel_event.is_set()):
+            on_progress(1.0)
+        return results, duration

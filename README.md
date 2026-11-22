@@ -2,19 +2,21 @@
 
 %100 offline, toplantıya bot sokmayan canlı toplantı ve ders deşifre + özet stüdyosu.
 
-## Hedef Özellikler (MVP)
-- **Çift kanallı ses yakalama:** Windows WASAPI loopback (karşı taraf) + mikrofon (kullanıcı) ayrı kanallarda kayıt
-- `faster-whisper` (INT8 CPU + VAD) ile canlı ve konuşmacı etiketli (`Sen` / `Karşı Taraf`) transkript
-- Toplantı/ders bitiminde lokal LLM (Ollama) veya opsiyonel API ile otomatik **özet, kararlar ve yapılacaklar listesi (action items)**
-- Markdown, TXT ve SRT formatlarında tek tıkla dışa aktarma
-- Toplantı arşivi ve metin içi hızlı arama
+## Özellikler (v0.2.0)
+- **Çift Kanallı Canlı Ses Yakalama:** Windows WASAPI loopback (`Karşı Taraf`) + mikrofon (`Sen`) ayrı kanallarda kayıt, gerçek zamanlı seviye ölçer ve opsiyonel ayrı WAV kaydı
+- **Ses / Video Dosyası İçe Aktarma:** `.mp3`, `.wav`, `.m4a`, `.mp4`, `.mkv`, `.ogg`, `.flac`, `.webm` dosyalarını sürükle-bırak veya tek tıkla offline deşifre
+- **Offline Deşifre (`faster-whisper`):** CTranslate2 INT8 CPU + Silero VAD, Ayarlar içinde Whisper model indirme ve önbellek yöneticisi
+- **Etkileşimli Transkript Stüdyosu:** Satır içi metin/konuşmacı düzenleme, ⭐ önemli an işaretleme (`Ctrl+B`), konuşmacı ve işaretli an filtreleri, canlı kelime & konuşma payı istatistikleri
+- **Şablonlu Akıllı Özetleme & Canlı Notlar:** `Genel Toplantı`, `Ders / Eğitim`, `Teknik / Sprint`, `Mülakat / Görüşme` şablonları; **Otomatik (Ollama → Yerleşik %100 Offline Motor)** veya opsiyonel OpenAI-uyumlu API desteği + canlı toplantı notları sekmesi
+- **Tek Tıkla Dışa Aktarma:** Markdown (`.md`), Düz Metin (`.txt`), Altyazı (`.srt`) ve tam yedek JSON (`.json`)
+- **Arşiv & Tam Metin Arama:** SQLite + FTS5 ile başlık, transkript, özet ve notlarda anında arama
+- **Klavye Kısayolları & Sistem Tepsisi:** `Ctrl+R` (Başlat/Bitir), `Ctrl+P` (Duraklat), `Ctrl+B` (Anı İşaretle), `Ctrl+O` (Dosya İçe Aktar), `Ctrl+G` (Özetle), `Ctrl+F` (Ara), `Ctrl+N` (Yeni), `Ctrl+,` (Ayarlar)
 
-## Planlanan Teknoloji Yığını
+## Teknoloji Yığını
 - **Dil:** Python 3.10+
 - **Arayüz:** PyQt6 Studio
-- **Ses & AI:** `pyaudiowpatch` (WASAPI Loopback), `faster-whisper` (CTranslate2 INT8 + Silero VAD), `httpx` (Ollama / OpenAI-uyumlu API)
+- **Ses & AI:** `pyaudiowpatch` (WASAPI Loopback), `faster-whisper` (CTranslate2 INT8 + Silero VAD), `httpx` (Ollama / API) + yerleşik offline extractive özet motoru
 - **Depolama:** SQLite + FTS5 tam metin arama
-- **Dağıtım:** PyInstaller / Inno Setup + Portable ZIP
 
 ## Kurulum ve Çalıştırma
 ```powershell
