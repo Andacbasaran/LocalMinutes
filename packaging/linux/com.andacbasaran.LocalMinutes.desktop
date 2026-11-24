@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=LocalMinutes
+GenericName=Bot-Free Offline Meeting & Lecture Transcription Studio
+Comment=100% offline, bot-free live meeting & lecture transcription, action items, local Q&A, and summary studio
+Comment[tr]=%100 çevrimdışı, botsuz canlı toplantı & ders transkripsiyonu, aksiyon maddeleri, yerel Soru-Cevap ve özet stüdyosu
+Exec=LocalMinutes
+Icon=localminutes
+Terminal=false
+Categories=Office;AudioVideo;Audio;Utility;
+Keywords=meeting;transcription;whisper;offline;notes;summary;privacy;zoom;teams;lecture;ollama;obsidian;
+StartupWMClass=LocalMinutes
+StartupNotify=true

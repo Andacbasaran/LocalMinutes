@@ -1,0 +1,56 @@
+name: Bug Report
+description: Report a crash, audio capture issue, Whisper transcription bug, or UI glitch in LocalMinutes.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve LocalMinutes! Please include your OS, audio devices, and Whisper model so we can reproduce the issue quickly.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Select Microphone and System Loopback devices
+        2. Click Record (Ctrl+R) or Import Media
+        3. Observe ...
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows 11 (x64)
+        - Windows 10 (x64)
+        - macOS (Apple Silicon M1/M2/M3/M4)
+        - macOS (Intel x86_64)
+        - Linux (PipeWire)
+        - Linux (PulseAudio / ALSA)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: LocalMinutes Version
+      placeholder: "e.g. v1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Audio Devices, Whisper Model & Summarizer Provider
+      placeholder: "Mic: MacBook Pro Mic, Loopback: WASAPI / BlackHole 2ch / PipeWire monitor, Whisper: small (INT8), Provider: Auto / Ollama / Air-Gapped"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or crash.log
+      description: Paste any error message or contents of `crash.log` from your LocalMinutes data folder.
+      render: text

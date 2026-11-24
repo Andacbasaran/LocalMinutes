@@ -1,4 +1,4 @@
-"""Zero-dependency 100% offline extractive summarizer (Turkish & English)."""
+"""Zero-dependency 100% offline extractive summarizer & note synthesizer (English & Turkish)."""
 
 from __future__ import annotations
 
@@ -21,12 +21,14 @@ _STOPWORDS = {
     "the", "and", "or", "for", "with", "that", "this", "from", "are", "was", "were", "have",
     "has", "had", "not", "but", "you", "your", "they", "their", "will", "would", "can", "could",
     "should", "about", "into", "just", "like", "then", "than", "also", "very", "here", "there",
+    "our", "we", "its", "been", "all", "what", "when", "where", "how", "who",
 }
 
 _DECISION_PATTERNS = re.compile(
     r"\b("
     r"karar|kararlaştır|onaylandı|anlaştık|mutabık|kesinleşti|seçildi|kullanılacak|"
-    r"uygulayacağız|geçeceğiz|böyle yapalım|netleşti|decided|agreed|approved|confirmed|we will use"
+    r"uygulayacağız|geçeceğiz|böyle yapalım|netleşti|decided|agreed|approved|confirmed|"
+    r"we will use|locked in|finalized|going with|ship on|aligned on"
     r")\b",
     re.IGNORECASE,
 )
@@ -36,7 +38,7 @@ _ACTION_PATTERNS = re.compile(
     r"yapacağım|yapacağız|yapalım|tamamlayalım|hazırlayalım|göndereceğim|paylaşacağım|"
     r"kontrol edelim|kontrol edeceğim|bitirelim|ekleyelim|düzeltelim|araştıralım|"
     r"takip edelim|gerekli|lazım|sorumlu|teslim|deadline|todo|action item|will do|need to|follow up|"
-    r"assign|send|prepare|review|finish|complete"
+    r"assign|send|prepare|review|finish|complete|i will|i'll|let's|make sure to|draft|benchmark|update"
     r")\b",
     re.IGNORECASE,
 )
@@ -56,13 +58,12 @@ def extractive_summarize(
     now = datetime.now().isoformat(timespec="seconds")
     if not segments:
         return SummaryResult(
-            overview="Özetlenecek transkript bulunmuyor.",
+            overview="No transcript segments available to summarize.",
             template=template,
             model_used="local/extractive-offline",
             generated_at=now,
         )
 
-    # Build candidate sentences keeping speaker & bookmark priority
     candidates: list[tuple[int, TranscriptSegment, list[str]]] = []
     doc_freq: Counter[str] = Counter()
 
@@ -87,9 +88,8 @@ def extractive_summarize(
             idf = math.log((total_docs + 1) / (doc_freq[tok] + 1)) + 1.0
             score += (count / max(1, len(tokens))) * idf
 
-        # Favor medium-length informative utterances and bookmarked moments
         length_bonus = min(1.0, len(tokens) / 10.0)
-        bookmark_bonus = 1.6 if seg.is_bookmarked else 1.0
+        bookmark_bonus = 1.65 if seg.is_bookmarked else 1.0
         final_score = score * (0.5 + 0.5 * length_bonus) * bookmark_bonus
         scored.append((final_score, idx, seg))
 
@@ -103,23 +103,19 @@ def extractive_summarize(
             if entry not in action_items:
                 action_items.append(entry)
 
-    # Top sentences for overview (preserve chronological order)
     top_for_overview = sorted(scored, key=lambda x: x[0], reverse=True)[: min(3, len(scored))]
     top_for_overview.sort(key=lambda x: x[1])
-    overview_sentences = [seg.text.strip() for _, _, seg in top_for_overview]
-    overview = " ".join(overview_sentences)
+    overview = " ".join(seg.text.strip() for _, _, seg in top_for_overview)
 
-    # Key points: top distinct informative segments + bookmarked ones
     top_for_points = sorted(scored, key=lambda x: x[0], reverse=True)[: min(6, len(scored))]
     top_for_points.sort(key=lambda x: x[1])
     key_points: list[str] = []
     for _, _, seg in top_for_points:
-        prefix = "⭐ " if seg.is_bookmarked else ""
+        prefix = "[Starred] " if seg.is_bookmarked else ""
         item = f"{prefix}{seg.speaker}: {seg.text.strip()}"
         if item not in key_points:
             key_points.append(item)
 
-    # Append manual notes to key points if present
     if notes.strip():
         for line in notes.strip().splitlines():
             line_clean = line.strip(" -•*")
@@ -136,3 +132,37 @@ def extractive_summarize(
         model_used="local/extractive-offline",
         generated_at=now,
     )
+
+
+def enhance_notes_offline(
+    segments: Sequence[TranscriptSegment],
+    notes: str,
+) -> str:
+    """Granola-style 100% offline note synthesis merging user jottings with grounded transcript evidence."""
+    summary = extractive_summarize(segments, notes=notes)
+    lines: list[str] = []
+    if notes.strip():
+        lines.append("### Your Notes (Preserved)")
+        for raw_line in notes.strip().splitlines():
+            cleaned = raw_line.strip()
+            if cleaned:
+                lines.append(cleaned if cleaned.startswith("-") else f"- {cleaned}")
+        lines.append("")
+
+    if summary.overview:
+        lines.append("### Transcript Context")
+        lines.append(summary.overview)
+        lines.append("")
+
+    if summary.decisions:
+        lines.append("### Decisions Mentioned")
+        for d in summary.decisions[:5]:
+            lines.append(f"- {d}")
+        lines.append("")
+
+    if summary.action_items:
+        lines.append("### Follow-Up Actions")
+        for a in summary.action_items[:6]:
+            lines.append(f"- [ ] {a}")
+
+    return "\n".join(lines).strip()

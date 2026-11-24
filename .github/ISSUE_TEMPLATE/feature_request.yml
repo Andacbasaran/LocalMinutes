@@ -1,0 +1,24 @@
+name: Feature Request
+description: Suggest a new meeting template, exporter, local LLM integration, or UI workflow improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What meeting, lecture, or privacy workflow are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the ideal behavior or feature you'd like to see in LocalMinutes.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional notes on existing workarounds or tools.

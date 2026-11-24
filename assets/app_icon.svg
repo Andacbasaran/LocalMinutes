@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Matte Obsidian Flat Tile -->
+  <rect x="12" y="12" width="488" height="488" rx="114" fill="#111114" stroke="#27272E" stroke-width="6"/>
+
+  <!-- Geometric Dual-Channel Acoustic Waveform (Emerald Mint Mic + White Core + Sky Remote) -->
+  <rect x="116" y="176" width="30" height="118" rx="15" fill="#10B981"/>
+  <rect x="164" y="126" width="30" height="168" rx="15" fill="#10B981"/>
+  <rect x="212" y="162" width="30" height="132" rx="15" fill="#FAFAFA"/>
+  <rect x="260" y="140" width="30" height="154" rx="15" fill="#FAFAFA"/>
+  <rect x="308" y="172" width="30" height="122" rx="15" fill="#38BDF8"/>
+  <rect x="356" y="198" width="30" height="96" rx="15" fill="#38BDF8"/>
+
+  <!-- Structured Meeting Minutes Lines -->
+  <rect x="116" y="336" width="280" height="24" rx="12" fill="#FAFAFA"/>
+  <rect x="116" y="378" width="186" height="24" rx="12" fill="#10B981"/>
+  <rect x="318" y="378" width="78" height="24" rx="12" fill="#52525B"/>
+</svg>

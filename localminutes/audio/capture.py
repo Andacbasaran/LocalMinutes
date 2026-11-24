@@ -1,8 +1,9 @@
-"""Dual-channel Windows WASAPI loopback + microphone audio capture."""
+"""Cross-platform dual-channel audio capture with anti-aliased polyphase 16 kHz resampling."""
 
 from __future__ import annotations
 
 import logging
+import math
 import threading
 import time
 import wave
@@ -11,16 +12,82 @@ from typing import Callable, Optional
 
 import numpy as np
 
-from localminutes.audio.devices import get_default_loopback_device, get_default_mic_device
+from localminutes.audio.devices import (
+    find_device_by_index,
+    get_default_loopback_device,
+    get_default_mic_device,
+    get_loopback_setup_hint,
+)
+from localminutes.models import AudioDevice
+
+try:
+    from scipy.signal import resample_poly as _scipy_resample_poly
+except ImportError:  # pragma: no cover
+    _scipy_resample_poly = None  # type: ignore[assignment]
 
 try:
     import pyaudiowpatch as pyaudio
 except ImportError:  # pragma: no cover
     pyaudio = None  # type: ignore[assignment]
 
+try:
+    import sounddevice as sd
+except ImportError:  # pragma: no cover
+    sd = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 TARGET_SAMPLE_RATE = 16_000
+
+
+def resample_float32_to_16k_mono(
+    samples: np.ndarray,
+    channels: int,
+    sample_rate: int,
+    target_rate: int = TARGET_SAMPLE_RATE,
+) -> np.ndarray:
+    """
+    Convert float32 audio (interleaved 1D or shape `(frames, channels)`) to anti-aliased
+    16 kHz mono float32 in `[-1.0, 1.0]` using polyphase FIR filtering (`scipy.signal.resample_poly`).
+    """
+    if samples.size == 0:
+        return np.empty(0, dtype=np.float32)
+
+    arr = np.asarray(samples, dtype=np.float32)
+    if arr.ndim == 2:
+        mono = arr.mean(axis=1) if arr.shape[1] > 1 else arr[:, 0]
+    elif channels > 1:
+        usable = (len(arr) // channels) * channels
+        if usable == 0:
+            return np.empty(0, dtype=np.float32)
+        mono = arr[:usable].reshape(-1, channels).mean(axis=1)
+    else:
+        mono = arr
+
+    if sample_rate <= 0 or sample_rate == target_rate or len(mono) == 0:
+        return np.clip(mono, -1.0, 1.0).astype(np.float32, copy=False)
+
+    if _scipy_resample_poly is not None:
+        g = math.gcd(int(target_rate), int(sample_rate))
+        up = max(1, int(target_rate) // g)
+        down = max(1, int(sample_rate) // g)
+        # Guard against exotic non-standard rates with huge prime ratios
+        if up <= 1024 and down <= 1024:
+            out = _scipy_resample_poly(mono, up, down).astype(np.float32, copy=False)
+            return np.clip(out, -1.0, 1.0)
+
+    # Fallback anti-aliased boxcar pre-filter + decimation/interpolation if scipy unavailable
+    if sample_rate > target_rate:
+        ratio = max(1, int(round(sample_rate / float(target_rate))))
+        if ratio > 1 and len(mono) >= ratio:
+            kernel = np.ones(ratio, dtype=np.float32) / float(ratio)
+            mono = np.convolve(mono, kernel, mode="same")
+
+    duration = len(mono) / float(sample_rate)
+    target_len = max(1, int(round(duration * target_rate)))
+    x_old = np.linspace(0.0, 1.0, num=len(mono), endpoint=False)
+    x_new = np.linspace(0.0, 1.0, num=target_len, endpoint=False)
+    return np.clip(np.interp(x_new, x_old, mono), -1.0, 1.0).astype(np.float32)
 
 
 def resample_to_16k_mono(
@@ -29,27 +96,27 @@ def resample_to_16k_mono(
     sample_rate: int,
     target_rate: int = TARGET_SAMPLE_RATE,
 ) -> np.ndarray:
-    """Convert raw int16 interleaved PCM bytes to 16 kHz mono float32 in [-1.0, 1.0]."""
+    """Convert raw int16 interleaved PCM bytes to anti-aliased 16 kHz mono float32 in [-1.0, 1.0]."""
     if not pcm_int16:
         return np.empty(0, dtype=np.float32)
-
     samples = np.frombuffer(pcm_int16, dtype=np.int16).astype(np.float32) / 32768.0
-    if channels > 1:
-        usable = (len(samples) // channels) * channels
-        samples = samples[:usable].reshape(-1, channels).mean(axis=1)
-
-    if sample_rate == target_rate or len(samples) == 0:
-        return samples.astype(np.float32, copy=False)
-
-    duration = len(samples) / float(sample_rate)
-    target_len = max(1, int(round(duration * target_rate)))
-    x_old = np.linspace(0.0, 1.0, num=len(samples), endpoint=False)
-    x_new = np.linspace(0.0, 1.0, num=target_len, endpoint=False)
-    return np.interp(x_new, x_old, samples).astype(np.float32)
+    return resample_float32_to_16k_mono(
+        samples=samples,
+        channels=channels,
+        sample_rate=sample_rate,
+        target_rate=target_rate,
+    )
 
 
 class DualAudioCapture:
-    """Captures microphone ('Sen') and WASAPI loopback ('Karşı Taraf') concurrently."""
+    """
+    Cross-platform concurrent dual-channel audio capture:
+      - Microphone channel (default speaker label: 'You')
+      - System loopback channel (default speaker label: 'Remote')
+    Supports Windows WASAPI (`pyaudiowpatch`), macOS CoreAudio + BlackHole (`sounddevice`),
+    and Linux PipeWire/PulseAudio `.monitor` (`sounddevice`), with clean single-channel mic
+    fallback and continuous `time_offset_sec` support for resumed meetings.
+    """
 
     def __init__(
         self,
@@ -61,6 +128,9 @@ class DualAudioCapture:
         capture_mic: bool = True,
         capture_loopback: bool = True,
         wav_dir: Optional[Path] = None,
+        time_offset_sec: float = 0.0,
+        mic_speaker: str = "You",
+        loopback_speaker: str = "Remote",
     ) -> None:
         self._on_audio = on_audio
         self._on_level = on_level
@@ -70,9 +140,13 @@ class DualAudioCapture:
         self._capture_mic = capture_mic
         self._capture_loopback = capture_loopback
         self._wav_dir = wav_dir
+        self._time_offset_sec = max(0.0, float(time_offset_sec))
+        self._mic_speaker = mic_speaker
+        self._loopback_speaker = loopback_speaker
 
         self._pa = None
-        self._streams: list[object] = []
+        self._pa_streams: list[object] = []
+        self._sd_streams: list[object] = []
         self._wav_files: dict[str, wave.Wave_write] = {}
         self._running = False
         self._paused = False
@@ -80,6 +154,7 @@ class DualAudioCapture:
         self._pause_started: float = 0.0
         self._paused_total: float = 0.0
         self._lock = threading.Lock()
+        self.active_channels: list[str] = []
 
     @property
     def is_running(self) -> bool:
@@ -91,100 +166,127 @@ class DualAudioCapture:
 
     @property
     def elapsed_seconds(self) -> float:
+        """Return total meeting elapsed seconds including any `time_offset_sec` from prior sessions."""
         if not self._running:
-            return 0.0
+            return self._time_offset_sec
         now = self._pause_started if self._paused else time.monotonic()
-        return max(0.0, now - self._start_monotonic - self._paused_total)
+        session_elapsed = max(0.0, now - self._start_monotonic - self._paused_total)
+        return self._time_offset_sec + session_elapsed
 
     def start(self) -> None:
-        if pyaudio is None:
-            raise RuntimeError("pyaudiowpatch yüklü değil. Lütfen 'pip install pyaudiowpatch' çalıştırın.")
+        if pyaudio is None and sd is None:
+            raise RuntimeError(
+                "No audio capture backend installed. Install 'sounddevice' (macOS/Linux/Windows) "
+                "or 'pyaudiowpatch' (Windows WASAPI)."
+            )
         if self._running:
             return
 
-        self._pa = pyaudio.PyAudio()
-        self._streams = []
+        self._pa_streams = []
+        self._sd_streams = []
         self._wav_files = {}
+        self.active_channels = []
         self._start_monotonic = time.monotonic()
         self._paused_total = 0.0
         self._paused = False
         self._running = True
 
-        started_any = False
-        errors: list[str] = []
+        warnings: list[str] = []
 
         if self._capture_mic:
             try:
-                mic_idx = self._mic_device_index
-                if mic_idx is None:
-                    default_mic = get_default_mic_device()
-                    mic_idx = default_mic.index if default_mic else None
-                if mic_idx is not None:
-                    self._open_stream(mic_idx, speaker="Sen")
-                    started_any = True
+                mic_dev = (
+                    find_device_by_index(self._mic_device_index, is_loopback=False)
+                    if self._mic_device_index is not None
+                    else get_default_mic_device()
+                )
+                if mic_dev is not None:
+                    self._open_device_stream(mic_dev, speaker=self._mic_speaker)
+                    self.active_channels.append(self._mic_speaker)
                 else:
-                    errors.append("Varsayılan mikrofon bulunamadı.")
+                    warnings.append("No default microphone device detected.")
             except Exception as exc:
-                errors.append(f"Mikrofon açılamadı: {exc}")
+                warnings.append(f"Microphone failed to open: {exc}")
 
         if self._capture_loopback:
             try:
-                lb_idx = self._loopback_device_index
-                if lb_idx is None:
-                    default_lb = get_default_loopback_device()
-                    lb_idx = default_lb.index if default_lb else None
-                if lb_idx is not None:
-                    self._open_stream(lb_idx, speaker="Karşı Taraf")
-                    started_any = True
+                lb_dev = (
+                    find_device_by_index(self._loopback_device_index, is_loopback=True)
+                    if self._loopback_device_index is not None
+                    else get_default_loopback_device()
+                )
+                if lb_dev is not None:
+                    self._open_device_stream(lb_dev, speaker=self._loopback_speaker)
+                    self.active_channels.append(self._loopback_speaker)
                 else:
-                    errors.append("Varsayılan WASAPI loopback cihazı bulunamadı.")
+                    warnings.append(get_loopback_setup_hint())
             except Exception as exc:
-                errors.append(f"Sistem sesi (loopback) açılamadı: {exc}")
+                warnings.append(f"System loopback failed to open: {exc}")
 
-        if not started_any:
+        if not self.active_channels:
             self.stop()
-            raise RuntimeError("Hiçbir ses kanalı başlatılamadı. " + " ".join(errors))
+            raise RuntimeError("Could not start any audio input channel. " + " ".join(warnings))
 
-        if errors and self._on_error:
-            self._on_error(" | ".join(errors))
+        if warnings and self._on_error:
+            self._on_error(" | ".join(warnings))
 
-    def _open_stream(self, device_index: int, speaker: str) -> None:
-        assert self._pa is not None
-        info = self._pa.get_device_info_by_index(device_index)
+    def _prepare_wav_writer(self, speaker: str) -> None:
+        if self._wav_dir is None:
+            return
+        self._wav_dir.mkdir(parents=True, exist_ok=True)
+        fname = "mic.wav" if speaker == self._mic_speaker else "system.wav"
+        target = self._wav_dir / fname
+        # If resuming into an existing directory, avoid overwriting earlier session audio
+        if target.exists():
+            stamp = int(time.time())
+            target = self._wav_dir / f"{target.stem}_{stamp}.wav"
+        wf = wave.open(str(target), "wb")
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(TARGET_SAMPLE_RATE)
+        self._wav_files[speaker] = wf
+
+    def _emit_audio_16k(self, speaker: str, audio_16k: np.ndarray) -> None:
+        if len(audio_16k) == 0:
+            return
+        rms = float(np.sqrt(np.mean(audio_16k * audio_16k)))
+        if self._on_level:
+            self._on_level(speaker, min(1.0, rms * 6.5))
+        if speaker in self._wav_files:
+            pcm_out = np.clip(audio_16k * 32767.0, -32768, 32767).astype(np.int16)
+            self._wav_files[speaker].writeframes(pcm_out.tobytes())
+        self._on_audio(speaker, audio_16k, self.elapsed_seconds)
+
+    def _open_device_stream(self, device: AudioDevice, speaker: str) -> None:
+        self._prepare_wav_writer(speaker)
+        if device.backend == "pyaudiowpatch" and pyaudio is not None:
+            self._open_pyaudio_stream(device, speaker)
+        elif sd is not None:
+            self._open_sounddevice_stream(device, speaker)
+        else:
+            raise RuntimeError(f"Audio backend '{device.backend}' is unavailable.")
+
+    def _open_pyaudio_stream(self, device: AudioDevice, speaker: str) -> None:
+        assert pyaudio is not None
+        if self._pa is None:
+            self._pa = pyaudio.PyAudio()
+        info = self._pa.get_device_info_by_index(device.index)
         sample_rate = int(info["defaultSampleRate"])
         channels = max(1, min(2, int(info["maxInputChannels"])))
-        frames_per_buffer = max(512, int(sample_rate * 0.05))  # ~50 ms
+        frames_per_buffer = max(512, int(sample_rate * 0.05))
 
-        if self._wav_dir is not None:
-            self._wav_dir.mkdir(parents=True, exist_ok=True)
-            fname = "mic.wav" if speaker == "Sen" else "system.wav"
-            wf = wave.open(str(self._wav_dir / fname), "wb")
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(TARGET_SAMPLE_RATE)
-            self._wav_files[speaker] = wf
-
-        def _callback(in_data, frame_count, time_info, status_flags):
+        def _callback(in_data, _frame_count, _time_info, _status_flags):
             if not self._running:
                 return (None, pyaudio.paComplete)
             if self._paused or not in_data:
                 if self._on_level:
                     self._on_level(speaker, 0.0)
                 return (None, pyaudio.paContinue)
-
             try:
                 audio_16k = resample_to_16k_mono(in_data, channels, sample_rate)
-                if len(audio_16k) > 0:
-                    rms = float(np.sqrt(np.mean(audio_16k * audio_16k)))
-                    if self._on_level:
-                        # Normalize softly for visual meter [0.0, 1.0]
-                        self._on_level(speaker, min(1.0, rms * 6.0))
-                    if speaker in self._wav_files:
-                        pcm_out = np.clip(audio_16k * 32767.0, -32768, 32767).astype(np.int16)
-                        self._wav_files[speaker].writeframes(pcm_out.tobytes())
-                    self._on_audio(speaker, audio_16k, self.elapsed_seconds)
+                self._emit_audio_16k(speaker, audio_16k)
             except Exception as exc:
-                logger.exception("Audio callback error (%s): %s", speaker, exc)
+                logger.exception("PyAudio callback error (%s): %s", speaker, exc)
             return (None, pyaudio.paContinue)
 
         stream = self._pa.open(
@@ -192,12 +294,44 @@ class DualAudioCapture:
             channels=channels,
             rate=sample_rate,
             input=True,
-            input_device_index=device_index,
+            input_device_index=device.index,
             frames_per_buffer=frames_per_buffer,
             stream_callback=_callback,
         )
         stream.start_stream()
-        self._streams.append(stream)
+        self._pa_streams.append(stream)
+
+    def _open_sounddevice_stream(self, device: AudioDevice, speaker: str) -> None:
+        assert sd is not None
+        sample_rate = max(8_000, int(device.default_sample_rate or 48_000))
+        channels = max(1, min(2, int(device.channels or 1)))
+        blocksize = max(512, int(sample_rate * 0.05))
+
+        def _callback(indata, _frames, _time_info, status):
+            if status:
+                logger.debug("sounddevice status (%s): %s", speaker, status)
+            if not self._running:
+                return
+            if self._paused or indata is None or len(indata) == 0:
+                if self._on_level:
+                    self._on_level(speaker, 0.0)
+                return
+            try:
+                audio_16k = resample_float32_to_16k_mono(indata, channels, sample_rate)
+                self._emit_audio_16k(speaker, audio_16k)
+            except Exception as exc:
+                logger.exception("sounddevice callback error (%s): %s", speaker, exc)
+
+        stream = sd.InputStream(
+            device=device.index,
+            channels=channels,
+            samplerate=sample_rate,
+            blocksize=blocksize,
+            dtype="float32",
+            callback=_callback,
+        )
+        stream.start()
+        self._sd_streams.append(stream)
 
     def pause(self) -> None:
         with self._lock:
@@ -214,13 +348,22 @@ class DualAudioCapture:
     def stop(self) -> None:
         self._running = False
         self._paused = False
-        for stream in self._streams:
+
+        for stream in self._pa_streams:
             try:
                 stream.stop_stream()
                 stream.close()
             except Exception:
                 pass
-        self._streams.clear()
+        self._pa_streams.clear()
+
+        for stream in self._sd_streams:
+            try:
+                stream.stop()
+                stream.close()
+            except Exception:
+                pass
+        self._sd_streams.clear()
 
         for wf in self._wav_files.values():
             try:

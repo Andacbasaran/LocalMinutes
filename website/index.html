@@ -1,0 +1,3737 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LocalMinutes — Her Toplantı Özetlenir. Toplantıya Sıfır Bot Girer.</title>
+  <meta name="description" content="Zoom, Teams, Google Meet, Discord ve dersler için Windows, macOS Apple Silicon ve Linux destekli, 0 Bot, 0 MB VRAM, 0.06 ms FTS5 arama ve 12.9 ms çevrimdışı özet sunan %100 yerel açık kaynak toplantı stüdyosu." />
+  <meta name="keywords" content="LocalMinutes, offline meeting transcription, bot-free meeting notes, Granola alternative, Fireflies alternative, Otter alternative, faster-whisper, SQLite FTS5, offline AI summary, toplantı özeti, çevrimdışı transkripsiyon, Windows WASAPI, macOS BlackHole, Linux PipeWire, 0 MB VRAM" />
+  <meta name="author" content="Andac Basaran" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#0A0A0D" />
+  <meta name="color-scheme" content="dark" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="LocalMinutes" />
+  <meta property="og:url" content="https://localminutes.andacbasaran.com/" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta property="og:title" content="LocalMinutes — Her Toplantı Özetlenir. Toplantıya Sıfır Bot Girer." />
+  <meta property="og:description" content="Toplantıya bot sokmadan çift kanallı ses yakalayan, 0 MB VRAM ile %100 çevrimdışı yazıya döken, özetleyen ve [MM:SS] kaynaklı yerel soru-cevap sunan açık kaynak Granola / Fireflies alternatifi." />
+  <meta property="og:image" content="https://localminutes.andacbasaran.com/assets/ui_preview.png?v=1.0.0" />
+  <meta property="og:image:alt" content="LocalMinutes Studio 2.0 v1.0.0 — Çevrimdışı ve Botsuz Canlı Toplantı Stüdyosu Arayüzü" />
+  <meta property="og:image:width" content="1240" />
+  <meta property="og:image:height" content="730" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LocalMinutes — Her Toplantı Özetlenir. Toplantıya Sıfır Bot Girer." />
+  <meta name="twitter:description" content="Toplantıya bot sokmadan çift kanallı ses yakalayan, 0 MB VRAM ile %100 çevrimdışı yazıya döken, özetleyen ve [MM:SS] kaynaklı yerel soru-cevap sunan açık kaynak Granola / Fireflies alternatifi." />
+  <meta name="twitter:image" content="https://localminutes.andacbasaran.com/assets/ui_preview.png?v=1.0.0" />
+  <meta name="twitter:image:alt" content="LocalMinutes Studio 2.0 v1.0.0 — Çevrimdışı ve Botsuz Canlı Toplantı Stüdyosu Arayüzü" />
+
+  <link rel="canonical" href="https://localminutes.andacbasaran.com/" />
+  <link rel="alternate" hreflang="tr" href="https://localminutes.andacbasaran.com/tr" />
+  <link rel="alternate" hreflang="en" href="https://localminutes.andacbasaran.com/en" />
+  <link rel="alternate" hreflang="x-default" href="https://localminutes.andacbasaran.com/" />
+
+  <link rel="icon" type="image/png" href="/assets/app_icon.png?v=1.0.0" />
+  <link rel="shortcut icon" href="/favicon.ico?v=1.0.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "LocalMinutes",
+    "alternateName": "LocalMinutes Studio 2.0 — Bot-Free Offline Meeting & Lecture Studio",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Windows 10, Windows 11, macOS 13+ (Apple Silicon), Linux (x86_64)",
+    "softwareVersion": "1.0.0",
+    "inLanguage": ["en", "tr"],
+    "isAccessibleForFree": true,
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://localminutes.andacbasaran.com/",
+    "downloadUrl": "https://github.com/Andacbasaran/LocalMinutes/releases/latest",
+    "codeRepository": "https://github.com/Andacbasaran/LocalMinutes",
+    "screenshot": "https://localminutes.andacbasaran.com/assets/ui_preview.png?v=1.0.0",
+    "description": "100% offline, bot-free live meeting and lecture transcription + AI summary studio with faster-whisper INT8 (0 MB VRAM), 0.06 ms SQLite FTS5 archive search, 12.9 ms 1-hour offline extractive summaries, and 9.1 ms BM25 Q&A citations on Windows, macOS Apple Silicon, and Linux.",
+    "featureList": [
+      "Zero meeting bots joined — native dual-channel You (mic) + Remote (system loopback) capture",
+      "Windows WASAPI, macOS CoreAudio + BlackHole 2ch, and Linux PipeWire / PulseAudio support",
+      "Anti-aliased polyphase DSP resampling (60.3 dB SNR, 0.78 ms per 1s stereo audio)",
+      "100% offline faster-whisper INT8 CPU transcription with 0 MB GPU VRAM and Silero VAD",
+      "0.06 ms average SQLite FTS5 archive search across 5,000+ transcript segments",
+      "12.9 ms 1-hour offline extractive summaries across Engineering, Lecture, Interview, and Executive templates",
+      "9.1 ms offline Okapi BM25 Ask This Meeting Q&A with clickable [MM:SS] grounded citations and optional Ollama",
+      "Granola-style private notes, cross-meeting Action Items Hub, Strict Air-Gapped Privacy Mode, and Obsidian YAML / SRT / VTT / JSON exports"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Andac Basaran",
+      "url": "https://andacbasaran.com"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0A0A0D;
+      --surface: #131318;
+      --surface-elevated: #1B1B22;
+      --border: #26262F;
+      --border-strong: #3E3E4B;
+      --text: #FAFAFA;
+      --muted: #A1A1AA;
+      --subtle: #71717A;
+      --accent: #10B981;
+      --accent-soft: rgba(16, 185, 129, 0.14);
+      --accent-bright: #34D399;
+      --sky: #38BDF8;
+      --sky-soft: rgba(56, 189, 248, 0.14);
+      --rose: #E11D48;
+      --rose-soft: rgba(225, 29, 72, 0.16);
+      --amber: #F59E0B;
+      --amber-soft: rgba(245, 158, 11, 0.16);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Architectural dot-grid + GPU-composited cursor spotlight */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 35%, transparent 100%);
+    }
+
+    .cursor-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.095) 0%, rgba(56, 189, 248, 0.03) 38%, transparent 70%);
+      transform: translate3d(-999px, -999px, 0);
+      will-change: transform, opacity;
+      transition: opacity 0.4s ease;
+    }
+
+    @media (pointer: coarse), (prefers-reduced-motion: reduce) {
+      .cursor-glow {
+        display: none;
+      }
+    }
+
+    /* Topbar */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 50;
+      background: rgba(10, 10, 13, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .brand img {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: block;
+      flex-shrink: 0;
+      transition: transform 0.25s var(--ease-spring);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .brand:hover img {
+        transform: scale(1.06) rotate(-2deg);
+      }
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--muted);
+      transition: color 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .top-link:hover {
+      color: var(--text);
+    }
+
+    /* Compact Segmented Language Switcher */
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      min-block-size: 28px;
+      min-inline-size: 32px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .lang-btn:hover {
+      color: var(--text);
+    }
+
+    .lang-btn[aria-pressed="true"] {
+      background: #25252E;
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--text);
+      border: 1px solid var(--text);
+      color: #09090B;
+      font-size: 0.82rem;
+      font-weight: 700;
+      min-block-size: 32px;
+      padding: 6px 14px;
+      border-radius: 7px;
+      white-space: nowrap;
+      transition: background-color 0.18s ease, transform 0.18s var(--ease-spring);
+    }
+
+    .btn-pill:hover {
+      background: #E4E4E7;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .btn-pill:hover {
+        transform: translateY(-1px);
+      }
+      .btn-pill:active {
+        transform: translateY(0) scale(0.98);
+      }
+    }
+
+    /* Right-side Scene Progress Rail */
+    .scene-rail {
+      position: fixed;
+      right: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 45;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .rail-dot {
+      width: 8px;
+      height: 8px;
+      min-block-size: 24px;
+      min-inline-size: 24px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .rail-dot::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--border-strong);
+      transition: background-color 0.25s ease, transform 0.3s var(--ease-spring);
+    }
+
+    .rail-dot:hover::before {
+      background: var(--muted);
+    }
+
+    .rail-dot.active::before {
+      background: var(--accent);
+      transform: scaleY(3.2);
+    }
+
+    /* Stage & Scenes */
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      z-index: 10;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 24px 82px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .scene {
+        transform: translate3d(0, 24px, 0) scale(0.99);
+        transition:
+          opacity 0.45s var(--ease-out),
+          transform 0.55s var(--ease-out);
+      }
+
+      .scene.prev {
+        transform: translate3d(0, -24px, 0) scale(0.99);
+      }
+
+      /* Staggered reveal choreography inside active scene */
+      .scene [data-reveal] {
+        opacity: 0;
+        transform: translate3d(0, 14px, 0);
+        transition:
+          opacity 0.5s var(--ease-out),
+          transform 0.6s var(--ease-out);
+      }
+
+      .scene.active [data-reveal] {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .scene.active [data-reveal="1"] { transition-delay: 40ms; }
+      .scene.active [data-reveal="2"] { transition-delay: 95ms; }
+      .scene.active [data-reveal="3"] { transition-delay: 150ms; }
+      .scene.active [data-reveal="4"] { transition-delay: 205ms; }
+      .scene.active [data-reveal="5"] { transition-delay: 260ms; }
+    }
+
+    .scene.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    /* SCENE 0: HERO */
+    .logo-showcase {
+      margin-bottom: 16px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .logo-showcase img {
+      width: 76px;
+      height: 76px;
+      border-radius: 18px;
+      border: 1px solid var(--border-strong);
+      display: block;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+      transition: transform 0.35s var(--ease-spring), border-color 0.25s ease;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .logo-showcase::after {
+        content: "";
+        position: absolute;
+        inset: -8px;
+        border-radius: 24px;
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        pointer-events: none;
+        animation: logo-ring-breathe 4.2s ease-in-out infinite;
+      }
+
+      .logo-showcase:hover img {
+        transform: translateY(-3px) scale(1.04);
+        border-color: rgba(16, 185, 129, 0.65);
+      }
+    }
+
+    @keyframes logo-ring-breathe {
+      0%, 100% { opacity: 0.35; transform: scale(1); }
+      50% { opacity: 0.88; transform: scale(1.045); }
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .live-dot {
+        animation: pulse-dot 2.4s ease-in-out infinite;
+      }
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.7; }
+    }
+
+    .eyebrow {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .headline {
+      font-size: clamp(2.05rem, 4.9vw, 3.7rem);
+      font-weight: 800;
+      line-height: 1.07;
+      letter-spacing: -0.035em;
+      max-width: 820px;
+      margin-bottom: 15px;
+      color: var(--text);
+    }
+
+    .headline--md {
+      font-size: clamp(1.5rem, 3.3vw, 2.45rem);
+      margin-bottom: 14px;
+    }
+
+    .headline--sm {
+      font-size: clamp(1.4rem, 2.9vw, 2.2rem);
+      margin-bottom: 10px;
+    }
+
+    .headline .accent-text {
+      color: var(--accent);
+      background: linear-gradient(120deg, #6EE7B7 0%, #10B981 55%, #38BDF8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subhead {
+      font-size: clamp(0.93rem, 1.35vw, 1.05rem);
+      color: var(--muted);
+      max-width: 590px;
+      font-weight: 400;
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+
+    /* CTAs */
+    .cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: var(--text);
+      color: #09090B;
+      border: 1px solid var(--text);
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      position: relative;
+      transition: background-color 0.18s ease, box-shadow 0.22s ease, transform 0.2s var(--ease-spring);
+    }
+
+    .btn-download:hover {
+      background: #EFEFF3;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-download-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.2s var(--ease-spring);
+    }
+
+    .btn-download-secondary:hover {
+      background: #25252E;
+      border-color: var(--muted);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .btn-download:hover,
+      .btn-download-secondary:hover {
+        transform: translateY(-2px);
+      }
+      .btn-download:active,
+      .btn-download-secondary:active {
+        transform: translateY(0) scale(0.985);
+      }
+    }
+
+    .caption-small {
+      margin-top: 11px;
+      font-size: 0.79rem;
+      color: var(--subtle);
+      line-height: 1.45;
+    }
+
+    .caption-small a {
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.16s ease;
+    }
+
+    .caption-small a:hover {
+      color: var(--text);
+    }
+
+    .ecosystem-line {
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.67rem;
+      letter-spacing: 0.02em;
+      color: var(--subtle);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ecosystem-line .eco-current {
+      color: var(--accent-bright);
+      font-weight: 600;
+    }
+
+    .specs-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      max-width: 780px;
+    }
+
+    .spec-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      white-space: nowrap;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .spec-pill strong {
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .spec-pill.accent-pill strong {
+      color: var(--accent-bright);
+    }
+
+    .spec-pill:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .scroll-hint {
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--subtle);
+      font-family: inherit;
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      min-block-size: 28px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: color 0.18s ease;
+    }
+
+    .scroll-hint:hover {
+      color: var(--text);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .scroll-hint svg {
+        animation: float-down 2s ease-in-out infinite;
+      }
+    }
+
+    @keyframes float-down {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+
+    /* SCENE 1: INTERACTIVE BOT-FREE DUAL-CHANNEL MEETING SIMULATOR */
+    .demo-card {
+      width: 100%;
+      max-width: 900px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.48);
+      text-align: left;
+    }
+
+    .demo-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .preset-pills {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 600;
+      min-block-size: 28px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .preset-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .preset-btn[aria-pressed="true"] {
+      background: var(--accent-soft);
+      border-color: rgba(16, 185, 129, 0.52);
+      color: #6EE7B7;
+    }
+
+    .demo-controls-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .key-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      min-block-size: 28px;
+      border-radius: 7px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .key-trigger-btn:hover {
+      color: var(--text);
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .key-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 0.67rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #272731;
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+    }
+
+    .demo-pause-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 600;
+      min-block-size: 28px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .demo-pause-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    /* Meeting Studio Simulator Viewport */
+    .meeting-viewport {
+      position: relative;
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse 85% 75% at 50% 0%, rgba(16, 185, 129, 0.065), transparent 62%),
+        linear-gradient(180deg, #0D0E14 0%, #09090C 100%);
+      border: 1px solid var(--border-strong);
+      padding: 12px 14px;
+      overflow: hidden;
+    }
+
+    .synth-sweep {
+      position: absolute;
+      inset: 0;
+      width: 34%;
+      background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.18), transparent);
+      transform: translate3d(-130%, 0, 0);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .synth-sweep.sweeping {
+        animation: synth-beam 0.55s var(--ease-out);
+      }
+    }
+
+    @keyframes synth-beam {
+      from { transform: translate3d(-130%, 0, 0); }
+      to { transform: translate3d(340%, 0, 0); }
+    }
+
+    .meeting-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(38, 38, 47, 0.85);
+      flex-wrap: wrap;
+    }
+
+    .capture-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .rec-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--rose-soft);
+      border: 1px solid rgba(225, 29, 72, 0.45);
+      color: #FDA4AF;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .rec-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--rose);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .meeting-viewport:not(.is-paused) .rec-dot {
+        animation: rec-pulse 1.8s ease-in-out infinite;
+      }
+    }
+
+    @keyframes rec-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .dual-wave-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 9px;
+      border-radius: 7px;
+      background: rgba(19, 19, 24, 0.9);
+      border: 1px solid var(--border);
+    }
+
+    .wave-legend {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.63rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .wave-legend.you { color: var(--accent-bright); }
+    .wave-legend.remote { color: var(--sky); }
+
+    .wave-bars {
+      display: inline-flex;
+      align-items: center;
+      gap: 2.5px;
+      height: 16px;
+    }
+
+    .wave-bar {
+      width: 2.5px;
+      height: var(--h, 9px);
+      border-radius: 99px;
+      transform-origin: center;
+    }
+
+    .wave-bar.ch-you { background: var(--accent); }
+    .wave-bar.ch-remote { background: var(--sky); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .meeting-viewport:not(.is-paused) .wave-bar {
+        animation: wave-bounce var(--d, 1.1s) ease-in-out infinite alternate;
+        animation-delay: var(--dl, 0s);
+      }
+    }
+
+    @keyframes wave-bounce {
+      0% { transform: scaleY(0.35); opacity: 0.7; }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+
+    .telemetry-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.64rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .telemetry-chip {
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .telemetry-chip.accent {
+      color: var(--accent-bright);
+      border-color: rgba(16, 185, 129, 0.34);
+      background: rgba(16, 185, 129, 0.09);
+    }
+
+    /* Split Dual-Channel Studio Columns */
+    .meeting-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+      gap: 12px;
+      align-items: stretch;
+      transition: opacity 0.18s ease;
+    }
+
+    .meeting-split.changing {
+      opacity: 0.22;
+    }
+
+    .sim-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .sim-pane-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--subtle);
+    }
+
+    .sim-pane-badge {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .sim-pane-badge.emerald {
+      background: var(--accent-soft);
+      border-color: rgba(16, 185, 129, 0.38);
+      color: #6EE7B7;
+    }
+
+    .transcript-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1;
+    }
+
+    .transcript-card {
+      background: #13131A;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 8px 10px;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .transcript-card.is-cited {
+      border-color: var(--accent);
+      background: rgba(16, 185, 129, 0.09);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22);
+    }
+
+    .transcript-card.is-starred {
+      border-color: rgba(245, 158, 11, 0.42);
+    }
+
+    .transcript-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .speaker-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .speaker-tag {
+      font-size: 0.67rem;
+      font-weight: 700;
+      padding: 1.5px 7px;
+      border-radius: 5px;
+      line-height: 1.3;
+    }
+
+    .speaker-tag.you {
+      background: var(--accent-soft);
+      border: 1px solid rgba(16, 185, 129, 0.42);
+      color: #6EE7B7;
+    }
+
+    .speaker-tag.remote {
+      background: var(--sky-soft);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #7DD3FC;
+    }
+
+    .ts-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      color: var(--subtle);
+    }
+
+    .bookmark-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--subtle);
+      font-family: inherit;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .bookmark-btn:hover {
+      color: #FCD34D;
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .bookmark-btn[aria-pressed="true"] {
+      color: var(--amber);
+      background: var(--amber-soft);
+      border-color: rgba(245, 158, 11, 0.42);
+    }
+
+    .transcript-text {
+      font-size: 0.77rem;
+      line-height: 1.42;
+      color: #E4E4E7;
+    }
+
+    /* Right AI Output Panel */
+    .ai-output-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      background: #121219;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .ai-template-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ai-template-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+    }
+
+    .ai-summary-text {
+      font-size: 0.78rem;
+      line-height: 1.48;
+      color: #E4E4E7;
+    }
+
+    .action-list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--subtle);
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    .action-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .action-item:hover {
+      border-color: var(--border-strong);
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .action-item input[type="checkbox"] {
+      margin-top: 2px;
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .action-item-text {
+      font-size: 0.74rem;
+      line-height: 1.38;
+      color: #E4E4E7;
+    }
+
+    .action-item.is-done .action-item-text {
+      text-decoration: line-through;
+      color: var(--subtle);
+    }
+
+    /* Ask AI Q&A View */
+    .qa-question-box {
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #BAE6FD;
+      line-height: 1.4;
+    }
+
+    .qa-answer-box {
+      font-size: 0.77rem;
+      line-height: 1.5;
+      color: #E4E4E7;
+    }
+
+    .citation-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .citation-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(16, 185, 129, 0.48);
+      color: #6EE7B7;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.71rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .citation-btn:hover {
+      background: rgba(16, 185, 129, 0.24);
+      border-color: var(--accent);
+    }
+
+    .qa-meta-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--subtle);
+    }
+
+    /* Demo Footer: Templates + Summary / Ask AI Switch */
+    .demo-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .style-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .template-pills {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .template-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      min-block-size: 26px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .template-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .template-btn[aria-pressed="true"] {
+      background: var(--accent-soft);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #6EE7B7;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 7px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      gap: 2px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.73rem;
+      font-weight: 600;
+      min-block-size: 26px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .mode-btn:hover {
+      color: var(--text);
+    }
+
+    .mode-btn[aria-pressed="true"] {
+      background: #272732;
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    /* SCENE 2: INTERACTIVE STUDIO 2.0 SHOWCASE */
+    .studio-showcase {
+      width: 100%;
+      max-width: 1030px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.56fr) minmax(265px, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .studio-perspective {
+      width: 100%;
+      perspective: 1200px;
+      display: flex;
+    }
+
+    .studio-frame {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(150deg, #1B1B24 0%, #111116 100%);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.58);
+      transform-style: preserve-3d;
+      transition: transform 0.25s var(--ease-out), border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .studio-frame:hover {
+      border-color: rgba(16, 185, 129, 0.48);
+      box-shadow: 0 28px 72px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(16, 185, 129, 0.14);
+    }
+
+    .window-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 13px;
+      background: #15151C;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .window-chrome-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .window-dots {
+      display: inline-flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .window-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #2C2C36;
+      border: 1px solid #3B3B48;
+    }
+
+    .window-dots span:nth-child(1) { background: rgba(239, 68, 68, 0.55); border-color: transparent; }
+    .window-dots span:nth-child(2) { background: rgba(245, 158, 11, 0.55); border-color: transparent; }
+    .window-dots span:nth-child(3) { background: rgba(16, 185, 129, 0.55); border-color: transparent; }
+
+    .window-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.69rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .window-chrome-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .window-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent-bright);
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+    }
+
+    .window-zoom-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 600;
+      min-block-size: 24px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .window-zoom-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+      background: #25252F;
+    }
+
+    .studio-media-wrap {
+      position: relative;
+      flex: 1;
+      background: #0B0B0E;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Exact 1240x730 aspect-locked stage so hotspot percentages align with pixels at every viewport */
+    .studio-stage-inner {
+      position: relative;
+      width: min(100%, calc(37dvh * 1240 / 730));
+      aspect-ratio: 1240 / 730;
+    }
+
+    .studio-slide {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 7px;
+      display: block;
+      background: #0C0C0E;
+      cursor: zoom-in;
+      transition: opacity 0.22s ease, transform 0.28s var(--ease-out);
+    }
+
+    .studio-slide[hidden] {
+      display: none;
+    }
+
+    .studio-slide.switching {
+      opacity: 0.25;
+    }
+
+    /* Interactive Hotspot Pins */
+    .hotspot-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hotspot-pin {
+      position: absolute;
+      left: var(--x, 50%);
+      top: var(--y, 50%);
+      transform: translate(-50%, -50%);
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1.5px solid #A7F3D0;
+      background: rgba(16, 185, 129, 0.94);
+      color: #062116;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+      transition: transform 0.2s var(--ease-spring), background-color 0.18s ease, box-shadow 0.2s ease;
+    }
+
+    .hotspot-pin:hover,
+    .hotspot-pin[aria-pressed="true"] {
+      transform: translate(-50%, -50%) scale(1.14);
+      background: #34D399;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.28), 0 6px 20px rgba(16, 185, 129, 0.55);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .hotspot-pin::after {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(16, 185, 129, 0.65);
+        pointer-events: none;
+        animation: pin-ripple 2.4s ease-out infinite;
+      }
+    }
+
+    @keyframes pin-ripple {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+
+    .hotspot-callout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 13px;
+      background: #14141B;
+      border-top: 1px solid var(--border);
+      font-size: 0.76rem;
+      line-height: 1.38;
+      color: var(--muted);
+    }
+
+    .hotspot-callout-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .hotspot-callout-badge {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(16, 185, 129, 0.52);
+      color: #6EE7B7;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+    }
+
+    .hotspot-callout strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Right Side Interactive Inspector Tabs */
+    .studio-inspector {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .inspector-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 100%;
+      padding: 11px 14px 11px 16px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      text-align: left;
+      font-family: inherit;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.2s ease;
+    }
+
+    /* Non-color border indicator so forced-colors mode preserves tab selection */
+    .inspector-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      border-inline-start: 3px solid transparent;
+      border-radius: 0 3px 3px 0;
+      transition: border-color 0.2s ease;
+    }
+
+    .inspector-card:hover {
+      background: #17171F;
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    .inspector-card[aria-selected="true"] {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, #171720 62%);
+      border-color: rgba(16, 185, 129, 0.48);
+      color: var(--text);
+    }
+
+    .inspector-card[aria-selected="true"]::before {
+      border-inline-start-color: var(--accent);
+    }
+
+    .inspector-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .inspector-card-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .inspector-step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.67rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #23232D;
+      border: 1px solid var(--border-strong);
+      color: var(--muted);
+    }
+
+    .inspector-card[aria-selected="true"] .inspector-step-num {
+      background: var(--accent-soft);
+      border-color: rgba(16, 185, 129, 0.52);
+      color: #6EE7B7;
+    }
+
+    .inspector-card-desc {
+      font-size: 0.76rem;
+      line-height: 1.44;
+      color: var(--muted);
+    }
+
+    .inspector-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .inspector-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .inspector-card[aria-selected="true"] .inspector-chip {
+      color: #E4E4E7;
+      border-color: #3A3A47;
+    }
+
+    /* Native Fullscreen Lightbox Dialog (Top-Layer Animated + Scroll Containment) */
+    dialog:modal {
+      overscroll-behavior: contain;
+    }
+
+    dialog::backdrop {
+      overflow: hidden;
+      overscroll-behavior: contain;
+    }
+
+    .studio-lightbox {
+      margin: auto;
+      width: min(94vw, 1140px);
+      max-height: 92dvh;
+      padding: 0;
+      border-radius: 16px;
+      border: 1px solid var(--border-strong);
+      background: #121218;
+      color: var(--text);
+      box-shadow: 0 32px 96px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+      opacity: 0;
+      transition-property: opacity, transform, display, overlay;
+      transition-duration: 0.26s;
+      transition-timing-function: var(--ease-out);
+      transition-behavior: allow-discrete;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .studio-lightbox {
+        transform: scale(0.95);
+      }
+    }
+
+    .studio-lightbox[open]:where(:not([data-closing])) {
+      opacity: 1;
+    }
+
+    @starting-style {
+      .studio-lightbox[open]:where(:not([data-closing])) {
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .studio-lightbox[open]:where(:not([data-closing])) {
+        transform: scale(1);
+      }
+      @starting-style {
+        .studio-lightbox[open]:where(:not([data-closing])) {
+          transform: scale(0.95);
+        }
+      }
+    }
+
+    .studio-lightbox::backdrop {
+      background-color: rgba(4, 4, 7, 0);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition-property: background-color, display, overlay;
+      transition-duration: 0.26s;
+      transition-timing-function: ease-out;
+      transition-behavior: allow-discrete;
+    }
+
+    .studio-lightbox[open]:where(:not([data-closing]))::backdrop {
+      background-color: rgba(4, 4, 7, 0.82);
+    }
+
+    @starting-style {
+      .studio-lightbox[open]:where(:not([data-closing]))::backdrop {
+        background-color: rgba(4, 4, 7, 0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .studio-lightbox,
+      .studio-lightbox::backdrop {
+        transition-duration: 0.1s;
+      }
+    }
+
+    .lightbox-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #16161E;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lightbox-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .lightbox-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lightbox-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      min-block-size: 30px;
+      padding: 5px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .lightbox-btn:hover {
+      background: #292935;
+      border-color: var(--muted);
+    }
+
+    .lightbox-body {
+      padding: 14px;
+      background: #0A0A0D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-body img {
+      width: 100%;
+      height: auto;
+      max-height: 76dvh;
+      object-fit: contain;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* Flat Bottom Navigation Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px;
+      border-radius: 11px;
+      background: rgba(19, 19, 24, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .dock-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      min-block-size: 32px;
+      padding: 7px 16px;
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .dock-btn:hover {
+      color: var(--text);
+    }
+
+    .dock-btn.active {
+      background: #25252E;
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    @media (forced-colors: active) {
+      .btn-download,
+      .btn-download-secondary,
+      .btn-pill,
+      .lang-btn[aria-pressed="true"],
+      .preset-btn[aria-pressed="true"],
+      .template-btn[aria-pressed="true"],
+      .mode-btn[aria-pressed="true"],
+      .dock-btn.active {
+        border: 2px solid ButtonText;
+      }
+      .inspector-card[aria-selected="true"]::before {
+        border-inline-start: 3px solid Highlight;
+      }
+      .studio-frame,
+      .demo-card,
+      .spec-pill,
+      .lang-switch,
+      .bottom-dock {
+        border: 1px solid CanvasText;
+      }
+      .headline .accent-text {
+        -webkit-text-fill-color: CanvasText;
+      }
+    }
+
+    @media (max-height: 700px) {
+      #scene-1,
+      #scene-2 {
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding-top: 72px;
+        padding-bottom: 84px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      #scene-1,
+      #scene-2 {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        padding-top: 72px;
+        padding-bottom: 84px;
+      }
+
+      .meeting-split {
+        grid-template-columns: 1fr;
+      }
+
+      .studio-showcase {
+        grid-template-columns: 1fr;
+        max-width: 580px;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .studio-inspector {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        overflow: visible;
+      }
+
+      .inspector-card {
+        min-width: 0;
+        padding: 8px 6px 9px;
+        align-items: center;
+        text-align: center;
+        gap: 4px;
+        border-radius: 10px;
+      }
+
+      .inspector-card::before {
+        left: 14px;
+        right: 14px;
+        top: auto;
+        bottom: 0;
+        border-inline-start: none;
+        border-block-end: 2.5px solid transparent;
+        border-radius: 3px 3px 0 0;
+      }
+
+      .inspector-card[aria-selected="true"]::before {
+        border-block-end-color: var(--accent);
+      }
+
+      .inspector-card-head {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .inspector-card-title {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.72rem;
+        line-height: 1.2;
+      }
+
+      .inspector-card-desc,
+      .inspector-chips,
+      .window-status {
+        display: none;
+      }
+
+      .window-chrome {
+        padding: 7px 10px;
+        gap: 6px;
+      }
+
+      .window-title {
+        font-size: 0.67rem;
+      }
+
+      .studio-media-wrap {
+        padding: 6px;
+      }
+
+      .studio-stage-inner {
+        width: min(100%, calc(30dvh * 1240 / 730));
+      }
+
+      .hotspot-callout {
+        padding: 8px 10px;
+        font-size: 0.72rem;
+        line-height: 1.35;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar {
+        height: 56px;
+        padding: 0 14px;
+      }
+
+      .top-actions {
+        gap: 8px;
+      }
+
+      .hide-mobile,
+      .scene-rail {
+        display: none !important;
+      }
+
+      .scene {
+        padding: 64px 14px 78px;
+      }
+
+      #scene-1,
+      #scene-2 {
+        padding: 64px 14px 82px;
+      }
+
+      #scene-2 .eyebrow {
+        margin-bottom: 5px;
+      }
+
+      #scene-2 .headline--sm {
+        font-size: clamp(1.18rem, 5vw, 1.52rem);
+        margin-bottom: 10px;
+      }
+
+      .logo-showcase img {
+        width: 62px;
+        height: 62px;
+      }
+
+      .cta-group {
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .btn-download,
+      .btn-download-secondary {
+        width: 100%;
+        max-width: 280px;
+        padding: 11px 18px;
+        font-size: 0.87rem;
+      }
+
+      #scene-2 .cta-group {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        max-width: 440px;
+      }
+
+      #scene-2 .btn-download,
+      #scene-2 .btn-download-secondary {
+        max-width: none;
+        padding: 9px 6px;
+        font-size: 0.74rem;
+        gap: 4px;
+      }
+
+      .window-dots {
+        display: none;
+      }
+
+      .hotspot-pin {
+        width: 24px;
+        height: 24px;
+        font-size: 0.68rem;
+      }
+
+      .studio-stage-inner {
+        width: min(100%, calc(26dvh * 1240 / 730));
+      }
+
+      .studio-lightbox {
+        width: 96vw;
+        border-radius: 12px;
+      }
+
+      .lightbox-bar {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 8px;
+      }
+
+      .lightbox-title {
+        font-size: 0.8rem;
+      }
+
+      .lightbox-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .lightbox-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 0.74rem;
+        padding: 6px 8px;
+      }
+
+      .lightbox-body {
+        padding: 8px;
+      }
+
+      .demo-card {
+        padding: 12px;
+      }
+
+      .telemetry-strip {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body data-scene="0">
+
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+
+  <!-- Minimal Flat Topbar -->
+  <header class="topbar">
+    <button type="button" class="brand" id="brand-home-btn" aria-label="LocalMinutes Ana Sayfa">
+      <img src="/assets/app_icon.png?v=1.0.0" alt="" width="30" height="30" />
+      <span>LocalMinutes</span>
+    </button>
+
+    <div class="top-actions">
+      <a href="https://github.com/Andacbasaran/LocalMinutes" target="_blank" rel="noopener" class="top-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span class="hide-mobile">GitHub</span>
+      </a>
+      <a href="https://andacbasaran.com" target="_blank" rel="noopener" class="top-link hide-mobile">andacbasaran.com</a>
+
+      <div class="lang-switch" role="group" id="lang-switch" aria-label="Dil Seçimi">
+        <button type="button" class="lang-btn" data-lang="tr" lang="tr" aria-pressed="true">TR</button>
+        <button type="button" class="lang-btn" data-lang="en" lang="en" aria-pressed="false">EN</button>
+      </div>
+
+      <a href="/downloads/LocalMinutes.exe" id="topbar-download-btn" class="btn-pill" download="LocalMinutes.exe" data-i18n="topDownload">İndir</a>
+    </div>
+  </header>
+
+  <!-- Right-Edge Scene Progress Rail -->
+  <div class="scene-rail" aria-hidden="true">
+    <button type="button" class="rail-dot active" data-rail-target="0" tabindex="-1"></button>
+    <button type="button" class="rail-dot" data-rail-target="1" tabindex="-1"></button>
+    <button type="button" class="rail-dot" data-rail-target="2" tabindex="-1"></button>
+  </div>
+
+  <main class="stage" id="stage">
+
+    <!-- SCENE 0: OVERVIEW / HERO -->
+    <section class="scene active" id="scene-0">
+      <div class="logo-showcase" data-reveal="1">
+        <img src="/assets/app_icon.png?v=1.0.0" alt="LocalMinutes Logo" width="76" height="76" fetchpriority="high" />
+      </div>
+
+      <div class="live-badge" data-reveal="1">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span data-i18n="heroBadge">v1.0.0 · Windows, macOS &amp; Linux</span>
+      </div>
+
+      <h1 class="headline" data-reveal="2">
+        <span data-i18n="heroTitleLine1">Her Toplantı Özetlenir.</span><br />
+        <span class="accent-text" data-i18n="heroTitleLine2">Toplantıya Sıfır Bot Girer.</span>
+      </h1>
+
+      <p class="subhead" data-reveal="3" data-i18n="heroSubhead">
+        Zoom, Teams, Google Meet, Discord ve dersleri doğrudan bilgisayarınızda kaydeder; 0 MB VRAM ile %100 çevrimdışı yazıya döker, özetler ve [MM:SS] kaynaklı soru-cevap sunar.
+      </p>
+
+      <div class="cta-group" data-reveal="4">
+        <a href="/downloads/LocalMinutes.exe" class="btn-download" download="LocalMinutes.exe">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <span data-i18n="heroWinBtn">Windows İçin İndir (.exe)</span>
+        </a>
+        <a href="/downloads/LocalMinutes-macOS.dmg" class="btn-download-secondary" download="LocalMinutes-macOS.dmg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.09-.52 2.72-1.3z"/></svg>
+          <span data-i18n="heroMacBtn">macOS Apple Silicon (.dmg)</span>
+        </a>
+      </div>
+
+      <div class="caption-small" data-reveal="4">
+        <span data-i18n="heroCaptionPrefix">v1.0.0 · Windows x64, macOS M1–M4 &amp;</span>
+        <a href="/downloads/LocalMinutes-Linux.tar.gz" download="LocalMinutes-Linux.tar.gz">Linux (.tar.gz)</a>
+        <span>·</span>
+        <a href="https://github.com/Andacbasaran/LocalMinutes" target="_blank" rel="noopener" data-i18n="heroCaptionLink">%100 Ücretsiz &amp; Açık Kaynak (MIT)</a>
+      </div>
+
+      <div class="specs-row" data-reveal="5">
+        <div class="spec-pill accent-pill"><strong id="fts-counter">0.06 ms</strong> <span data-i18n="specFts">FTS5 Arşiv Arama</span></div>
+        <div class="spec-pill"><strong>0 Bots · 0 MB VRAM</strong> <span data-i18n="specOffline">· %100 Çevrimdışı</span></div>
+        <div class="spec-pill"><strong>12.9 ms</strong> <span data-i18n="specSummary">1 Saatlik Çevrimdışı Özet</span></div>
+        <a href="https://github.com/Andacbasaran/LocalMinutes" target="_blank" rel="noopener" class="spec-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span data-i18n="specMit">Açık Kaynak MIT</span>
+        </a>
+      </div>
+
+      <button type="button" class="scroll-hint" id="scroll-next-btn" data-reveal="5">
+        <span data-i18n="heroExplore">Canlı toplantı simülatörünü dene</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </section>
+
+    <!-- SCENE 1: INTERACTIVE BOT-FREE DUAL-CHANNEL MEETING SIMULATOR -->
+    <section class="scene" id="scene-1" inert>
+      <div class="eyebrow" data-reveal="1" data-i18n="simEyebrow">İnteraktif Çift Kanallı Toplantı Simülatörü</div>
+      <h2 class="headline headline--md" data-reveal="2">
+        <span data-i18n="simTitle1">İki kanal.</span>
+        <span class="accent-text" data-i18n="simTitle2">Sıfır toplantı botu.</span>
+      </h2>
+
+      <div class="demo-card" data-reveal="3">
+        <div class="demo-toolbar">
+          <div class="preset-pills" role="group" id="scene-presets" aria-label="Toplantı Senaryoları">
+            <button type="button" class="preset-btn" data-preset="0" aria-pressed="true" data-i18n="scenario0">Sprint Planlama</button>
+            <button type="button" class="preset-btn" data-preset="1" aria-pressed="false" data-i18n="scenario1">CS Dersi</button>
+            <button type="button" class="preset-btn" data-preset="2" aria-pressed="false" data-i18n="scenario2">Teknik Mülakat</button>
+          </div>
+
+          <div class="demo-controls-right">
+            <button type="button" class="key-trigger-btn" id="btn-sim-synth">
+              <span class="key-badge">Space</span>
+              <span class="key-badge">⌘G</span>
+              <span data-i18n="keySynthLabel">Özet / AI Sor</span>
+            </button>
+            <button type="button" class="demo-pause-btn" id="btn-demo-pause">Duraklat</button>
+          </div>
+        </div>
+
+        <div class="meeting-viewport" id="meeting-viewport">
+          <div class="synth-sweep" id="synth-sweep" aria-hidden="true"></div>
+
+          <div class="meeting-header">
+            <div class="capture-strip">
+              <span class="rec-pill">
+                <span class="rec-dot" aria-hidden="true"></span>
+                <span>REC · <span id="sim-clock">33:00</span></span>
+              </span>
+
+              <div class="dual-wave-box" aria-hidden="true">
+                <span class="wave-legend you" data-i18n="waveYou">Sen · Mik</span>
+                <div class="wave-bars">
+                  <span class="wave-bar ch-you" style="--h:10px;--d:0.85s;--dl:0s"></span>
+                  <span class="wave-bar ch-you" style="--h:15px;--d:1.05s;--dl:0.15s"></span>
+                  <span class="wave-bar ch-you" style="--h:8px;--d:0.9s;--dl:0.3s"></span>
+                  <span class="wave-bar ch-you" style="--h:13px;--d:1.15s;--dl:0.1s"></span>
+                  <span class="wave-bar ch-remote" style="--h:11px;--d:0.95s;--dl:0.25s"></span>
+                  <span class="wave-bar ch-remote" style="--h:15px;--d:1.1s;--dl:0.05s"></span>
+                  <span class="wave-bar ch-remote" style="--h:9px;--d:0.8s;--dl:0.35s"></span>
+                  <span class="wave-bar ch-remote" style="--h:14px;--d:1.2s;--dl:0.2s"></span>
+                </div>
+                <span class="wave-legend remote" data-i18n="waveRemote">Karşı · Sistem</span>
+              </div>
+            </div>
+
+            <div class="telemetry-strip" aria-hidden="true">
+              <span class="telemetry-chip accent">0 BOTS IN CALL</span>
+              <span class="telemetry-chip">0 BYTES UPLOADED</span>
+              <span class="telemetry-chip">FTS5 0.06 ms</span>
+              <span class="telemetry-chip" id="tel-engine">SUMMARY 12.9 ms</span>
+            </div>
+          </div>
+
+          <div class="meeting-split" id="meeting-split">
+            <!-- Left Column: Speaker-Separated Live Transcript -->
+            <div class="sim-pane">
+              <div class="sim-pane-label">
+                <span data-i18n="paneTranscript">Canlı Çift Kanallı Transkript</span>
+                <span class="sim-pane-badge">60.3 dB SNR · INT8</span>
+              </div>
+              <div class="transcript-list" id="transcript-list"></div>
+            </div>
+
+            <!-- Right Column: AI Summary + Action Items OR Ask This Meeting Q&A -->
+            <div class="sim-pane">
+              <div class="sim-pane-label">
+                <span id="ai-pane-heading" data-i18n="paneSummary">Çevrimdışı Özet &amp; Aksiyonlar</span>
+                <span class="sim-pane-badge emerald" id="ai-engine-badge">local/extractive · 12.9 ms</span>
+              </div>
+              <div class="ai-output-card" id="ai-output-card"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-footer">
+          <div class="style-group">
+            <span data-i18n="templateLabel">Şablon:</span>
+            <div class="template-pills" role="group" id="template-pills" aria-label="Özet Şablonu">
+              <button type="button" class="template-btn" data-template="engineering" aria-pressed="true" data-i18n="tplEngineering">Mühendislik</button>
+              <button type="button" class="template-btn" data-template="lecture" aria-pressed="false" data-i18n="tplLecture">Ders</button>
+              <button type="button" class="template-btn" data-template="interview" aria-pressed="false" data-i18n="tplInterview">Mülakat</button>
+              <button type="button" class="template-btn" data-template="executive" aria-pressed="false" data-i18n="tplExecutive">Yönetici</button>
+            </div>
+          </div>
+
+          <div class="style-group">
+            <div class="mode-switch" role="group" id="mode-switch" aria-label="AI Çıktı Modu">
+              <button type="button" class="mode-btn" data-mode="summary" aria-pressed="true" data-i18n="modeSummary">Çevrimdışı Özet</button>
+              <button type="button" class="mode-btn" data-mode="qa" aria-pressed="false" data-i18n="modeQa">AI Soru-Cevap</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 2: INTERACTIVE STUDIO 2.0 SHOWCASE & DOWNLOADS -->
+    <section class="scene" id="scene-2" inert>
+      <div class="eyebrow" data-reveal="1" data-i18n="studioEyebrow">LocalMinutes Studio 2.0 · v1.0.0</div>
+      <h2 class="headline headline--sm" data-reveal="2">
+        <span data-i18n="studioTitle1">Tek stüdyo.</span>
+        <span class="accent-text" data-i18n="studioTitle2">Sıfır bulut bağımlılığı.</span>
+      </h2>
+
+      <div class="studio-showcase" data-reveal="3">
+        <!-- Left: 3D-Tilt App Window with Real Screenshots & Pixel-Accurate Hotspots -->
+        <div class="studio-perspective">
+          <div class="studio-frame" id="studio-tilt-card">
+            <div class="window-chrome">
+              <div class="window-chrome-left">
+                <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                <span class="window-title" id="window-title-text">LocalMinutes Studio 2.0 · 1. Canlı Toplantı Stüdyosu</span>
+              </div>
+              <div class="window-chrome-right">
+                <span class="window-status">● 0 BOTS · 0 MB VRAM</span>
+                <button type="button" class="window-zoom-btn" id="btn-open-lightbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  <span data-i18n="zoomBtn">Tam Ekran</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="studio-media-wrap">
+              <div class="studio-stage-inner">
+                <img class="studio-slide" data-slide="0" src="/assets/ui_preview.png?v=1.0.0" alt="LocalMinutes Studio 2.0 — Canlı Toplantı Stüdyosu Arayüzü" width="1240" height="730" loading="lazy" />
+                <img class="studio-slide" data-slide="1" src="/assets/ui_preview_tasks.png?v=1.0.0" alt="LocalMinutes Studio 2.0 — Aksiyon Maddeleri ve Arşiv Merkezi Arayüzü" width="1240" height="730" loading="lazy" hidden />
+                <img class="studio-slide" data-slide="2" src="/assets/ui_preview_settings.png?v=1.0.0" alt="LocalMinutes Studio 2.0 — Ayarlar ve Sistem Telemetrisi Arayüzü" width="1240" height="730" loading="lazy" hidden />
+                <div class="hotspot-layer" id="hotspot-layer">
+                  <button type="button" class="hotspot-pin" data-pin="0" style="--x: 31%; --y: 36.5%;" aria-pressed="true" aria-label="Feature 1">1</button>
+                  <button type="button" class="hotspot-pin" data-pin="1" style="--x: 87.5%; --y: 29.8%;" aria-pressed="false" aria-label="Feature 2">2</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="hotspot-callout" id="hotspot-callout">
+              <div class="hotspot-callout-main">
+                <span class="hotspot-callout-badge" id="callout-num">1</span>
+                <span><strong id="callout-title">Çift Kanallı Canlı Transkript:</strong> <span id="callout-desc">Mikrofon (You) ve sistem sesi (Remote) ayrı kartlarda zaman damgası, yıldızlı yer imi ve konuşma oranı çubuğuyla kaydedilir.</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: 3 Inspector Tabs -->
+        <div class="studio-inspector" role="tablist" id="preview-tablist" aria-label="Arayüz Sekmeleri">
+          <button type="button" role="tab" aria-selected="true" class="inspector-card" data-tab="0">
+            <div class="inspector-card-head">
+              <span class="inspector-card-title">
+                <span class="inspector-step-num">01</span>
+                <span data-i18n="tabStudio">Canlı Toplantı Stüdyosu</span>
+              </span>
+            </div>
+            <p class="inspector-card-desc" data-i18n="tabStudioDesc">Çift kanallı konuşmacı ayrımı, yıldızlı yer imleri, Granola tarzı özel notlar, 12.9 ms özet ve [MM:SS] kaynaklı Ask AI.</p>
+            <div class="inspector-chips">
+              <span class="inspector-chip">Dual-Ch Audio</span>
+              <span class="inspector-chip">Notes + Ask AI</span>
+              <span class="inspector-chip">60.3 dB SNR</span>
+            </div>
+          </button>
+
+          <button type="button" role="tab" aria-selected="false" class="inspector-card" data-tab="1">
+            <div class="inspector-card-head">
+              <span class="inspector-card-title">
+                <span class="inspector-step-num">02</span>
+                <span data-i18n="tabTasks">Aksiyonlar &amp; Arşiv Merkezi</span>
+              </span>
+            </div>
+            <p class="inspector-card-desc" data-i18n="tabTasksDesc">Tüm toplantılardaki açık aksiyon maddelerini tek yerde takip et, kaynak transkripte atla ve 0.06 ms SQLite FTS5 ile ara.</p>
+            <div class="inspector-chips">
+              <span class="inspector-chip">FTS5 0.06 ms</span>
+              <span class="inspector-chip">Cross-Meeting</span>
+              <span class="inspector-chip">Obsidian YAML</span>
+            </div>
+          </button>
+
+          <button type="button" role="tab" aria-selected="false" class="inspector-card" data-tab="2">
+            <div class="inspector-card-head">
+              <span class="inspector-card-title">
+                <span class="inspector-step-num">03</span>
+                <span data-i18n="tabSettings">Ayarlar &amp; Telemetri</span>
+              </span>
+            </div>
+            <p class="inspector-card-desc" data-i18n="tabSettingsDesc">WASAPI / CoreAudio+BlackHole / PipeWire ses yönlendirme, faster-whisper INT8 model önbelleği ve Air-Gapped gizlilik modu.</p>
+            <div class="inspector-chips">
+              <span class="inspector-chip">0 Bots · Air-Gap</span>
+              <span class="inspector-chip">Whisper INT8</span>
+              <span class="inspector-chip">0 MB VRAM</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="cta-group" data-reveal="4">
+        <a href="/downloads/LocalMinutes.exe" class="btn-download" download="LocalMinutes.exe">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <span>Windows (.exe)</span>
+        </a>
+        <a href="/downloads/LocalMinutes-macOS.dmg" class="btn-download-secondary" download="LocalMinutes-macOS.dmg">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.09-.52 2.72-1.3z"/></svg>
+          <span>macOS (.dmg)</span>
+        </a>
+        <a href="/downloads/LocalMinutes-Linux.tar.gz" class="btn-download-secondary" download="LocalMinutes-Linux.tar.gz">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+          <span>Linux (.tar.gz)</span>
+        </a>
+      </div>
+
+      <div class="caption-small" data-reveal="5">
+        <span data-i18n="studioCaptionPrefix">v1.0.0 sürümünü doğrudan indirir ·</span>
+        <a href="https://github.com/Andacbasaran/LocalMinutes/releases/latest" target="_blank" rel="noopener" data-i18n="studioCaptionLink">Tüm Paketler &amp; SHA-256 (GitHub Releases)</a>
+      </div>
+
+      <div class="ecosystem-line" data-reveal="5" aria-label="Local-First Suite">
+        <span>SubVision AI</span>
+        <span aria-hidden="true">·</span>
+        <span>ClearMic</span>
+        <span aria-hidden="true">·</span>
+        <span>LocalDictate</span>
+        <span aria-hidden="true">·</span>
+        <span class="eco-current">LocalMinutes</span>
+        <span aria-hidden="true">·</span>
+        <span>LocalRecall</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Native Fullscreen Studio Lightbox -->
+  <dialog id="studio-lightbox" class="studio-lightbox" closedby="any" aria-labelledby="lightbox-title">
+    <div class="lightbox-bar">
+      <h1 class="lightbox-title" id="lightbox-title">LocalMinutes Studio 2.0 · 1. Canlı Toplantı Stüdyosu</h1>
+      <div class="lightbox-actions">
+        <button type="button" class="lightbox-btn" id="lightbox-prev" data-i18n="lightboxPrev">← Önceki</button>
+        <button type="button" class="lightbox-btn" id="lightbox-next" data-i18n="lightboxNext">Sonraki →</button>
+        <button type="button" class="lightbox-btn" id="lightbox-close" autofocus data-i18n="lightboxClose">Kapat</button>
+      </div>
+    </div>
+    <div class="lightbox-body">
+      <img id="lightbox-img" src="/assets/ui_preview.png?v=1.0.0" alt="LocalMinutes Studio 2.0" width="1240" height="730" loading="lazy" />
+    </div>
+  </dialog>
+
+  <nav class="bottom-dock" id="bottom-dock" aria-label="Sahne Seçici">
+    <button type="button" class="dock-btn active" data-scene-target="0" aria-current="step" data-i18n="dockIntro">Tanıtım</button>
+    <button type="button" class="dock-btn" data-scene-target="1" data-i18n="dockSim">Simülatör</button>
+    <button type="button" class="dock-btn" data-scene-target="2" data-i18n="dockApp">Studio 2.0</button>
+  </nav>
+
+  <script>
+    window.__INITIAL_LANG__ = null;
+
+    const I18N = {
+      tr: {
+        pageTitle: "LocalMinutes — Her Toplantı Özetlenir. Toplantıya Sıfır Bot Girer.",
+        metaDescription: "Zoom, Teams, Google Meet, Discord ve dersler için Windows, macOS Apple Silicon ve Linux destekli, 0 Bot, 0 MB VRAM, 0.06 ms FTS5 arama ve 12.9 ms çevrimdışı özet sunan %100 yerel açık kaynak toplantı stüdyosu.",
+        langSwitchLabel: "Dil Seçimi",
+        brandAria: "LocalMinutes Ana Sayfa",
+        topDownload: "İndir",
+        heroBadge: "v1.0.0 · Windows, macOS & Linux",
+        heroTitleLine1: "Her Toplantı Özetlenir.",
+        heroTitleLine2: "Toplantıya Sıfır Bot Girer.",
+        heroSubhead: "Zoom, Teams, Google Meet, Discord ve dersleri doğrudan bilgisayarınızda kaydeder; 0 MB VRAM ile %100 çevrimdışı yazıya döker, özetler ve [MM:SS] kaynaklı soru-cevap sunar.",
+        heroWinBtn: "Windows İçin İndir (.exe)",
+        heroMacBtn: "macOS Apple Silicon (.dmg)",
+        heroCaptionPrefix: "v1.0.0 · Windows x64, macOS M1–M4 &",
+        heroCaptionLink: "%100 Ücretsiz & Açık Kaynak (MIT)",
+        specFts: "FTS5 Arşiv Arama",
+        specOffline: "· %100 Çevrimdışı",
+        specSummary: "1 Saatlik Çevrimdışı Özet",
+        specMit: "Açık Kaynak MIT",
+        heroExplore: "Canlı toplantı simülatörünü dene",
+        simEyebrow: "İnteraktif Çift Kanallı Toplantı Simülatörü",
+        simTitle1: "İki kanal.",
+        simTitle2: "Sıfır toplantı botu.",
+        presetsAria: "Toplantı Senaryoları",
+        scenario0: "Sprint Planlama",
+        scenario1: "CS Dersi",
+        scenario2: "Teknik Mülakat",
+        keySynthLabel: "Özet / AI Sor",
+        pauseLabel: "Duraklat",
+        playLabel: "Oynat",
+        waveYou: "Sen · Mik",
+        waveRemote: "Karşı · Sistem",
+        paneTranscript: "Canlı Çift Kanallı Transkript",
+        paneSummary: "Çevrimdışı Özet & Aksiyonlar",
+        paneQa: "Bu Toplantıya Sor (BM25 Q&A)",
+        actionItemsHead: "AKSİYON MADDELERİ",
+        bookmarkAria: "Yer imi ekle veya kaldır",
+        bookmarkLabel: "Yer İmi",
+        templateLabel: "Şablon:",
+        templateGroupAria: "Özet Şablonu",
+        tplEngineering: "Mühendislik",
+        tplLecture: "Ders",
+        tplInterview: "Mülakat",
+        tplExecutive: "Yönetici",
+        modeSwitchAria: "AI Çıktı Modu",
+        modeSummary: "Çevrimdışı Özet",
+        modeQa: "AI Soru-Cevap",
+        jumpSource: "Kaynağa Atla",
+        qaGroundedNote: "Yerel Okapi BM25 · 0 bulut çağrısı",
+        studioEyebrow: "LocalMinutes Studio 2.0 · v1.0.0",
+        studioTitle1: "Tek stüdyo.",
+        studioTitle2: "Sıfır bulut bağımlılığı.",
+        previewTabsLabel: "Arayüz Sekmeleri",
+        zoomBtn: "Tam Ekran",
+        lightboxPrev: "← Önceki",
+        lightboxNext: "Sonraki →",
+        lightboxClose: "Kapat",
+        tabStudio: "Canlı Toplantı Stüdyosu",
+        tabStudioDesc: "Çift kanallı konuşmacı ayrımı, yıldızlı yer imleri, Granola tarzı özel notlar, 12.9 ms özet ve [MM:SS] kaynaklı Ask AI.",
+        tabTasks: "Aksiyonlar & Arşiv Merkezi",
+        tabTasksDesc: "Tüm toplantılardaki açık aksiyon maddelerini tek yerde takip et, kaynak transkripte atla ve 0.06 ms SQLite FTS5 ile ara.",
+        tabSettings: "Ayarlar & Telemetri",
+        tabSettingsDesc: "WASAPI / CoreAudio+BlackHole / PipeWire ses yönlendirme, faster-whisper INT8 model önbelleği ve Air-Gapped gizlilik modu.",
+        slideAlts: [
+          "LocalMinutes Studio 2.0 — Canlı Toplantı Stüdyosu Arayüzü",
+          "LocalMinutes Studio 2.0 — Aksiyon Maddeleri ve Arşiv Merkezi Arayüzü",
+          "LocalMinutes Studio 2.0 — Ayarlar ve Sistem Telemetrisi Arayüzü"
+        ],
+        studioCaptionPrefix: "v1.0.0 sürümünü doğrudan indirir ·",
+        studioCaptionLink: "Tüm Paketler & SHA-256 (GitHub Releases)",
+        dockAria: "Sahne Seçici",
+        dockIntro: "Tanıtım",
+        dockSim: "Simülatör",
+        dockApp: "Studio 2.0"
+      },
+      en: {
+        pageTitle: "LocalMinutes — Every Meeting Summarized. Zero Bots Join Your Call.",
+        metaDescription: "100% offline, bot-free live meeting and lecture transcription studio with faster-whisper INT8 (0 MB VRAM), 0.06 ms SQLite FTS5 archive search, 12.9 ms offline summaries, and grounded [MM:SS] Q&A on Windows, macOS Apple Silicon, and Linux.",
+        langSwitchLabel: "Language Switcher",
+        brandAria: "LocalMinutes Home",
+        topDownload: "Download",
+        heroBadge: "v1.0.0 · Windows, macOS & Linux",
+        heroTitleLine1: "Every Meeting Summarized.",
+        heroTitleLine2: "Zero Bots Join Your Call.",
+        heroSubhead: "Captures Zoom, Teams, Google Meet, Discord, and lectures natively on your device — 100% offline faster-whisper INT8 transcription, instant summaries, and [MM:SS] cited Q&A with 0 MB VRAM.",
+        heroWinBtn: "Download for Windows (.exe)",
+        heroMacBtn: "macOS Apple Silicon (.dmg)",
+        heroCaptionPrefix: "v1.0.0 · Windows x64, macOS M1–M4 &",
+        heroCaptionLink: "100% Free & Open Source (MIT)",
+        specFts: "FTS5 Archive Search",
+        specOffline: "· 100% Offline",
+        specSummary: "1h Offline Summary",
+        specMit: "Open Source MIT",
+        heroExplore: "Try live meeting simulator",
+        simEyebrow: "Interactive Bot-Free Dual-Channel Simulator",
+        simTitle1: "Dual channels.",
+        simTitle2: "Zero meeting bots.",
+        presetsAria: "Meeting Scenarios",
+        scenario0: "Sprint Planning",
+        scenario1: "CS Lecture",
+        scenario2: "Tech Interview",
+        keySynthLabel: "Summarize / Ask AI",
+        pauseLabel: "Pause",
+        playLabel: "Play",
+        waveYou: "You · Mic",
+        waveRemote: "Remote · System",
+        paneTranscript: "Live Dual-Channel Transcript",
+        paneSummary: "Offline Summary & Action Items",
+        paneQa: "Ask This Meeting (BM25 Q&A)",
+        actionItemsHead: "ACTION ITEMS",
+        bookmarkAria: "Toggle bookmark",
+        bookmarkLabel: "Bookmark",
+        templateLabel: "Template:",
+        templateGroupAria: "Summary Template",
+        tplEngineering: "Engineering",
+        tplLecture: "Lecture",
+        tplInterview: "Interview",
+        tplExecutive: "Executive",
+        modeSwitchAria: "AI Output Mode",
+        modeSummary: "Offline Summary",
+        modeQa: "Ask AI Q&A",
+        jumpSource: "Jump to Source",
+        qaGroundedNote: "Local Okapi BM25 · 0 cloud requests",
+        studioEyebrow: "LocalMinutes Studio 2.0 · v1.0.0",
+        studioTitle1: "One workspace.",
+        studioTitle2: "Zero cloud dependency.",
+        previewTabsLabel: "Interface Tabs",
+        zoomBtn: "Fullscreen",
+        lightboxPrev: "← Prev",
+        lightboxNext: "Next →",
+        lightboxClose: "Close",
+        tabStudio: "Live Meeting Studio",
+        tabStudioDesc: "Dual-channel speaker separation, starred bookmarks, Granola-style private notes, 12.9 ms offline summaries, and [MM:SS] cited Ask AI.",
+        tabTasks: "Action Items & Archive Hub",
+        tabTasksDesc: "Track open commitments across every recorded session, jump directly to source transcripts, and search via 0.06 ms SQLite FTS5.",
+        tabSettings: "Settings & Telemetry",
+        tabSettingsDesc: "Cross-platform WASAPI / CoreAudio+BlackHole / PipeWire routing, faster-whisper INT8 cache manager, and Strict Air-Gapped Mode.",
+        slideAlts: [
+          "LocalMinutes Studio 2.0 — Live Meeting Studio Interface",
+          "LocalMinutes Studio 2.0 — Action Items & Archive Hub Interface",
+          "LocalMinutes Studio 2.0 — Settings & System Telemetry Interface"
+        ],
+        studioCaptionPrefix: "Direct download for latest v1.0.0 ·",
+        studioCaptionLink: "All Packages & SHA-256 (GitHub Releases)",
+        dockAria: "Scene Navigation",
+        dockIntro: "Overview",
+        dockSim: "Simulator",
+        dockApp: "Studio 2.0"
+      }
+    };
+
+    const TEMPLATE_HEADS = {
+      engineering: { tr: "MÜHENDİSLİK ÖZETİ", en: "ENGINEERING SUMMARY" },
+      lecture: { tr: "DERS ÖZETİ", en: "LECTURE BRIEF" },
+      interview: { tr: "MÜLAKAT DEĞERLENDİRMESİ", en: "INTERVIEW BRIEF" },
+      executive: { tr: "YÖNETİCİ ÖZETİ", en: "EXECUTIVE SUMMARY" }
+    };
+
+    const SCENARIOS = [
+      {
+        clock: "33:00",
+        defaultTemplate: "engineering",
+        segments: [
+          {
+            speakerType: "you",
+            speaker: { tr: "Sen", en: "You" },
+            ts: "00:04",
+            starred: true,
+            text: {
+              tr: "v1.0 sprint planlamasına hoş geldiniz. Çapraz platform ses hattını ve çıkış tarihini bugün kesinleştirelim.",
+              en: "Welcome to v1.0 sprint planning. Let's lock in the cross-platform audio pipeline and launch date today."
+            }
+          },
+          {
+            speakerType: "remote",
+            speaker: { tr: "Selin · Karşı", en: "Selin · Remote" },
+            ts: "00:15",
+            starred: false,
+            text: {
+              tr: "Windows WASAPI loopback kurulumsuz hazır. macOS Apple Silicon tarafında BlackHole 2ch ve DSP kalitesi doğrulandı mı?",
+              en: "Windows WASAPI loopback works with zero setup. Are macOS BlackHole 2ch and polyphase DSP verified?"
+            }
+          },
+          {
+            speakerType: "you",
+            speaker: { tr: "Sen", en: "You" },
+            ts: "00:30",
+            starred: true,
+            text: {
+              tr: "Evet — CoreAudio ve Linux PipeWire aktif; polyphase yeniden örnekleme 60.3 dB SNR ile 0.78 ms sürüyor.",
+              en: "Yes — CoreAudio and Linux PipeWire are live, and polyphase resampling hits 60.3 dB SNR in 0.78 ms."
+            }
+          }
+        ],
+        summaries: {
+          engineering: {
+            tr: "Ekip Windows WASAPI, macOS CoreAudio/BlackHole ve Linux PipeWire ses yakalama, 60.3 dB SNR polyphase DSP ve 0.06 ms SQLite FTS5 ile LocalMinutes v1.0.0 sürümünü kilitleme kararı aldı.",
+            en: "The team locked LocalMinutes v1.0.0 across Windows WASAPI, macOS CoreAudio/BlackHole, and Linux PipeWire with 60.3 dB SNR polyphase DSP and 0.06 ms SQLite FTS5 search."
+          },
+          lecture: {
+            tr: "Ana teknik kavramlar: çift kanallı loopback yakalama, örtüşme önleyici polyphase DSP (60.3 dB SNR) ve gömülü SQLite FTS5 indeksleme mimarisi.",
+            en: "Key concepts covered: dual-channel loopback capture, anti-aliased polyphase resampling (60.3 dB SNR), and embedded SQLite FTS5 indexing."
+          },
+          interview: {
+            tr: "Sistem mimarisi sinyali: sıfır bulut bağımlılığı ve 0 MB VRAM kısıtı altında üç işletim sisteminde tutarlı düşük gecikmeli ses akışı tasarlandı.",
+            en: "Architecture signal: consistent cross-OS low-latency audio routing designed strictly under 0 MB VRAM and zero-cloud constraints."
+          },
+          executive: {
+            tr: "v1.0.0 sürümü Windows, macOS ve Linux paketleriyle yayına hazır; sıfır bot ve sıfır bulut maliyetiyle tam yerel gizlilik sağlandı.",
+            en: "v1.0.0 is launch-ready across Windows, macOS, and Linux, delivering full on-device privacy with zero bots and zero cloud cost."
+          }
+        },
+        actions: [
+          {
+            done: false,
+            text: {
+              tr: "Sen: Benchmark infografiğini ve Obsidian YAML rehberini yayınla",
+              en: "You: Publish benchmark infographic & Obsidian YAML export guide"
+            }
+          },
+          {
+            done: true,
+            text: {
+              tr: "Mert: macOS arm64 DMG, Windows kurulum ve SHA-256 akışını onayla",
+              en: "Mert: Finalize macOS arm64 DMG, Windows installer & SHA-256 workflow"
+            }
+          }
+        ],
+        qa: {
+          question: {
+            tr: "macOS ses yakalama ve yeniden örnekleme performansı nasıl?",
+            en: "How are macOS capture and resampling performing?"
+          },
+          answer: {
+            tr: "CoreAudio/BlackHole 2ch ve PipeWire aktif; anti-aliased polyphase DSP ile 48 kHz → 16 kHz dönüşümü 0.78 ms sürede 60.3 dB SNR veriyor.",
+            en: "CoreAudio/BlackHole 2ch and PipeWire are active; anti-aliased polyphase DSP converts 48 kHz → 16 kHz in 0.78 ms at 60.3 dB SNR."
+          },
+          citeTs: "00:30",
+          citeIdx: 2
+        }
+      },
+      {
+        clock: "52:00",
+        defaultTemplate: "lecture",
+        segments: [
+          {
+            speakerType: "remote",
+            speaker: { tr: "Prof. Kaya · Karşı", en: "Prof. Kaya · Remote" },
+            ts: "14:10",
+            starred: true,
+            text: {
+              tr: "Raft konsensüsünde her dönem en fazla bir lider seçilir; aday çoğunluk oyunu alamazsa zaman aşımıyla yeni dönem başlar.",
+              en: "In Raft consensus, at most one leader is elected per term; split votes trigger a randomized election timeout."
+            }
+          },
+          {
+            speakerType: "you",
+            speaker: { tr: "Sen", en: "You" },
+            ts: "14:22",
+            starred: false,
+            text: {
+              tr: "Lider eski bir günlük kaydını çoğunluğa kopyaladıysa ancak önceki döneme aitse doğrudan commit edebilir mi?",
+              en: "Can a new leader directly commit a log entry from a previous term once it is replicated on a majority?"
+            }
+          },
+          {
+            speakerType: "remote",
+            speaker: { tr: "Prof. Kaya · Karşı", en: "Prof. Kaya · Remote" },
+            ts: "14:35",
+            starred: true,
+            text: {
+              tr: "Hayır — Raft Şekil 8 kuralına göre lider yalnızca mevcut dönemden bir kaydı çoğunluğa yazdığında öncekileri dolaylı commit eder.",
+              en: "No — per Raft Figure 8, a leader only commits entries from its current term, indirectly committing prior entries."
+            }
+          }
+        ],
+        summaries: {
+          lecture: {
+            tr: "CS 412 Dağıtık Konsensüs dersinde Raft lider seçimi, dönem tekilliği ve Şekil 8 güvenlik kuralı (yalnızca mevcut dönem kayıtlarının doğrudan commit edilmesi) işlendi.",
+            en: "CS 412 Distributed Consensus covered Raft leader election safety, randomized timeouts, and the Figure 8 rule restricting direct commits to current-term entries."
+          },
+          engineering: {
+            tr: "Uygulama kısıtı: AppendEntries RPC uygulamasında eski dönem günlük kayıtları mevcut dönem kaydı çoğunluğa ulaşana kadar commitIndex ilerletmemeli.",
+            en: "Implementation constraint: AppendEntries must not advance commitIndex on prior-term entries until a current-term entry reaches a majority."
+          },
+          interview: {
+            tr: "Derinlik noktası: Raft'ta Şekil 8 senaryosunu açıklayabilmek dağıtık sistem güvenlik invariantlarına hakimiyeti gösterir.",
+            en: "Depth signal: explaining Raft's Figure 8 edge case demonstrates mastery of distributed consensus safety invariants."
+          },
+          executive: {
+            tr: "Ders kaydı 0 MB VRAM ile çevrimdışı indekslendi; sınav kritik kavramı olan Raft Şekil 8 kuralı yer imiyle işaretlendi.",
+            en: "Lecture archived locally at 0 MB VRAM; the exam-critical Raft Figure 8 safety invariant is starred and indexed."
+          }
+        },
+        actions: [
+          {
+            done: false,
+            text: {
+              tr: "Sen: Raft Şekil 2 durum geçişlerini incele ve replikasyon testini yaz",
+              en: "You: Review Raft Figure 2 state transitions & write replication tests"
+            }
+          },
+          {
+            done: false,
+            text: {
+              tr: "Sen: Ders notlarını Obsidian YAML olarak CS-412 kasasına aktar",
+              en: "You: Export lecture packet as Obsidian YAML into CS-412 vault"
+            }
+          }
+        ],
+        qa: {
+          question: {
+            tr: "Yeni lider önceki dönemden bir kaydı doğrudan commit edebilir mi?",
+            en: "Can a new leader directly commit an entry from a prior term?"
+          },
+          answer: {
+            tr: "Hayır. Raft Şekil 8 güvenlik kuralına göre lider sadece mevcut dönemdeki bir kaydı çoğunluğa replike ederek önceki kayıtları dolaylı commit eder.",
+            en: "No. Under Raft's Figure 8 safety rule, a leader must replicate an entry from its current term to a majority to indirectly commit prior entries."
+          },
+          citeTs: "14:35",
+          citeIdx: 2
+        }
+      },
+      {
+        clock: "41:00",
+        defaultTemplate: "interview",
+        segments: [
+          {
+            speakerType: "you",
+            speaker: { tr: "Sen", en: "You" },
+            ts: "21:08",
+            starred: false,
+            text: {
+              tr: "Kurumsal güvenlik ekibinin toplantı botlarına izin vermediği bir ortamda arama indeksini nasıl hızlı tutarsınız?",
+              en: "In an enterprise where meeting bots are banned, how would you keep transcript search instant offline?"
+            }
+          },
+          {
+            speakerType: "remote",
+            speaker: { tr: "Alex · Karşı", en: "Alex · Remote" },
+            ts: "21:24",
+            starred: true,
+            text: {
+              tr: "SQLite WAL + FTS5 unicode61 kullanır, C++ gibi özel karakterleri sanitize ederek 5.000 segmentte milisaniye altı arama alırım.",
+              en: "Use SQLite WAL + FTS5 unicode61 with query sanitization for tokens like C++ to achieve sub-millisecond search over 5,000 segments."
+            }
+          },
+          {
+            speakerType: "remote",
+            speaker: { tr: "Alex · Karşı", en: "Alex · Remote" },
+            ts: "21:40",
+            starred: false,
+            text: {
+              tr: "Ayrıca tek anahtarlı Air-Gapped modla tüm dış HTTP çağrılarını kapatır, BM25 ile kanıtlı yanıt üretirim.",
+              en: "Pair it with a single Air-Gapped toggle blocking all outbound HTTP and run local BM25 for grounded citations."
+            }
+          }
+        ],
+        summaries: {
+          interview: {
+            tr: "Güçlü mimari değerlendirme: aday SQLite WAL + FTS5 sorgu güvenliği, Air-Gapped gizlilik tasarımı ve yerel BM25 kaynak gösterimi konularında somut çözüm sundu.",
+            en: "Strong systems signal: candidate proposed SQLite WAL + FTS5 query sanitization, strict Air-Gapped HTTP isolation, and local BM25 grounded retrieval."
+          },
+          engineering: {
+            tr: "Teknik tasarım: unicode61 tokenizer + özel karakter temizliği ile 5.000 segmentte 0.06 ms arama ve 9.1 ms BM25 soru-cevap hattı.",
+            en: "Technical stack: unicode61 tokenizer with special-char sanitization for 0.06 ms search over 5,000 segments and 9.1 ms BM25 Q&A."
+          },
+          lecture: {
+            tr: "Temel örüntüler: ters indeksli tam metin araması (FTS5) ve istatistiksel okuma sıralaması (Okapi BM25) ile çevrimdışı bilgi erişimi.",
+            en: "Core retrieval patterns: inverted full-text indexing (FTS5) combined with Okapi BM25 ranking for offline QA."
+          },
+          executive: {
+            tr: "Aday kurumsal güvenlik ve sıfır-bot uyumluluğu gereksinimlerini uçtan uca karşılayan üretime hazır bir yaklaşım sergiledi.",
+            en: "Candidate demonstrated a production-ready approach meeting strict enterprise zero-bot and air-gapped compliance requirements."
+          }
+        },
+        actions: [
+          {
+            done: false,
+            text: {
+              tr: "Sen: Mülakat değerlendirme kartını işe alım ekibiyle yerel Markdown olarak paylaş",
+              en: "You: Share local Markdown interview scorecard with hiring panel"
+            }
+          },
+          {
+            done: true,
+            text: {
+              tr: "Sen: SecOps için SHA-256 doğrulama rehberini hazırla",
+              en: "You: Send SHA-256 release verification guide to SecOps"
+            }
+          }
+        ],
+        qa: {
+          question: {
+            tr: "Aday çevrimdışı aramayı ve özel karakterleri nasıl ele aldı?",
+            en: "How did the candidate handle offline search and special tokens?"
+          },
+          answer: {
+            tr: "SQLite WAL + FTS5 unicode61 indekslemesi ve C++ gibi özel karakterlerin güvenli temizliğiyle 5.000 segmentte milisaniye altı arama önerdi.",
+            en: "Proposed SQLite WAL + FTS5 unicode61 indexing with query sanitization for tokens like C++ to achieve sub-millisecond search over 5,000 segments."
+          },
+          citeTs: "21:24",
+          citeIdx: 1
+        }
+      }
+    ];
+
+    const STUDIO_TABS = [
+      {
+        img: "/assets/ui_preview.png?v=1.0.0",
+        title: {
+          tr: "LocalMinutes Studio 2.0 · 1. Canlı Toplantı Stüdyosu",
+          en: "LocalMinutes Studio 2.0 · 1. Live Meeting Studio"
+        },
+        pins: [
+          {
+            x: "31%",
+            y: "36.5%",
+            title: { tr: "Çift Kanallı Canlı Transkript:", en: "Dual-Channel Live Transcript:" },
+            desc: {
+              tr: "Mikrofon (You) ve sistem sesi (Remote) ayrı kartlarda zaman damgası, yıldızlı yer imi ve konuşma oranı çubuğuyla kaydedilir.",
+              en: "Microphone (You) and system loopback (Remote) log into separated cards with timestamps, starred bookmarks, and talk-time ratio."
+            }
+          },
+          {
+            x: "87.5%",
+            y: "29.8%",
+            title: { tr: "12.9 ms Çevrimdışı Özet & Ask AI:", en: "12.9 ms Offline Summary & Ask AI:" },
+            desc: {
+              tr: "Bulut veya LLM olmadan 1 saatlik toplantıyı 12.9 ms'de özetle, notlarını zenginleştir ve [MM:SS] kaynaklı yerel soru-cevap al.",
+              en: "Summarize 1-hour calls offline in 12.9 ms with zero LLM required, enhance private notes, and run [MM:SS] cited local Q&A."
+            }
+          }
+        ]
+      },
+      {
+        img: "/assets/ui_preview_tasks.png?v=1.0.0",
+        title: {
+          tr: "LocalMinutes Studio 2.0 · 2. Aksiyonlar & Arşiv Merkezi",
+          en: "LocalMinutes Studio 2.0 · 2. Action Items & Archive Hub"
+        },
+        pins: [
+          {
+            x: "34%",
+            y: "16.2%",
+            title: { tr: "SQLite WAL & 0.06 ms FTS5 Kasası:", en: "SQLite WAL & 0.06 ms FTS5 Vault:" },
+            desc: {
+              tr: "Tüm toplantıların, kelimelerin ve aksiyonların %100 cihazında saklanır; 5.000 segmentte ortalama 0.06 ms hızla aranır.",
+              en: "Every session, transcript, and task stays 100% local in SQLite WAL with 0.06 ms average FTS5 search across 5,000 segments."
+            }
+          },
+          {
+            x: "81.5%",
+            y: "43.2%",
+            title: { tr: "Toplantılar Arası Görevler & Kaynağa Atla:", en: "Cross-Meeting Tasks & Jump to Source:" },
+            desc: {
+              tr: "Sorumlu ve tarih etiketli tüm açık aksiyon maddelerini yönet; Open Meeting ile tek tıkla ilgili toplantı transkriptine dön.",
+              en: "Track commitments across every recorded meeting with owner/due pills and click Open Meeting to jump straight to the source transcript."
+            }
+          }
+        ]
+      },
+      {
+        img: "/assets/ui_preview_settings.png?v=1.0.0",
+        title: {
+          tr: "LocalMinutes Studio 2.0 · 3. Ayarlar & Sistem Telemetrisi",
+          en: "LocalMinutes Studio 2.0 · 3. Settings & System Telemetry"
+        },
+        pins: [
+          {
+            x: "69%",
+            y: "21.5%",
+            title: { tr: "Sıfır Bot & 0 MB VRAM Telemetrisi:", en: "Zero-Bot & 0 MB VRAM Telemetry:" },
+            desc: {
+              tr: "Donanım profilini, 0 MB GPU yükünü ve 0 bayt bulut aktarımını canlı izle; tek tuşla Strict Air-Gapped gizlilik modunu kilitle.",
+              en: "Monitor live CPU thread scaling, 0 MB VRAM usage, and 0 bytes uploaded — lock Strict Air-Gapped Privacy Mode in one toggle."
+            }
+          },
+          {
+            x: "46.5%",
+            y: "47.5%",
+            title: { tr: "Çapraz Platform Çift Kanallı Ses:", en: "Cross-Platform Dual-Channel Routing:" },
+            desc: {
+              tr: "Windows WASAPI (sıfır sürücü), macOS CoreAudio + BlackHole 2ch ve Linux PipeWire kaynaklarını 60.3 dB SNR ile otomatik algılar.",
+              en: "Auto-detects Windows WASAPI loopback, macOS CoreAudio + BlackHole 2ch, and Linux PipeWire monitors with 60.3 dB SNR DSP."
+            }
+          }
+        ]
+      }
+    ];
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let activeLang = "tr";
+    let demoPaused = prefersReducedMotion;
+    let scenarioIdx = 0;
+    let activeTemplate = "engineering";
+    let activeAiMode = "summary";
+    let citedIdx = -1;
+    let activeStudioTab = 0;
+    let activePinIdx = 0;
+
+    const pauseBtn = document.getElementById('btn-demo-pause');
+    const meetingViewport = document.getElementById('meeting-viewport');
+    const synthSweep = document.getElementById('synth-sweep');
+    const meetingSplit = document.getElementById('meeting-split');
+    const studioLightbox = document.getElementById('studio-lightbox');
+
+    function getCookieLang() {
+      const m = document.cookie.match(/(?:^|;\s*)lm_lang=(tr|en)(?:;|$)/i);
+      return m ? m[1].toLowerCase() : null;
+    }
+
+    function detectClientLang() {
+      const path = window.location.pathname.replace(/\/+$/, "");
+      if (path === "/tr") return "tr";
+      if (path === "/en") return "en";
+
+      const params = new URLSearchParams(window.location.search);
+      const qLang = (params.get("lang") || "").toLowerCase();
+      if (qLang === "tr" || qLang === "en") return qLang;
+
+      try {
+        const stored = localStorage.getItem("lm_lang");
+        if (stored === "tr" || stored === "en") return stored;
+      } catch (_) {}
+
+      const cookieLang = getCookieLang();
+      if (cookieLang === "tr" || cookieLang === "en") return cookieLang;
+
+      if (window.__INITIAL_LANG__ === "tr" || window.__INITIAL_LANG__ === "en") {
+        return window.__INITIAL_LANG__;
+      }
+
+      const langs = Array.isArray(navigator.languages) && navigator.languages.length
+        ? navigator.languages
+        : [navigator.language || ""];
+      for (const raw of langs) {
+        const code = String(raw || "").toLowerCase();
+        if (code === "tr" || code.startsWith("tr-")) return "tr";
+        if (code === "en" || code.startsWith("en-")) return "en";
+      }
+      return "en";
+    }
+
+    function syncPauseButtonLabel() {
+      if (!pauseBtn) return;
+      const dict = I18N[activeLang] || I18N.en;
+      pauseBtn.textContent = demoPaused ? dict.playLabel : dict.pauseLabel;
+      if (meetingViewport) {
+        meetingViewport.classList.toggle('is-paused', demoPaused);
+      }
+    }
+
+    function triggerSynthSweep() {
+      if (!synthSweep || prefersReducedMotion) return;
+      synthSweep.classList.remove('sweeping');
+      void synthSweep.offsetWidth;
+      synthSweep.classList.add('sweeping');
+    }
+
+    function renderSimulator() {
+      const sc = SCENARIOS[scenarioIdx];
+      const lang = activeLang === "tr" ? "tr" : "en";
+      const dict = I18N[lang];
+      if (!sc) return;
+
+      const clockEl = document.getElementById('sim-clock');
+      if (clockEl) clockEl.textContent = sc.clock;
+
+      const telEngine = document.getElementById('tel-engine');
+      if (telEngine) {
+        telEngine.textContent = activeAiMode === "qa" ? "BM25 Q&A 9.1 ms" : "SUMMARY 12.9 ms";
+      }
+
+      const paneHeading = document.getElementById('ai-pane-heading');
+      const engineBadge = document.getElementById('ai-engine-badge');
+      if (paneHeading) {
+        paneHeading.textContent = activeAiMode === "qa" ? dict.paneQa : dict.paneSummary;
+      }
+      if (engineBadge) {
+        engineBadge.textContent = activeAiMode === "qa" ? "bm25-grounded · 9.1 ms" : "local/extractive · 12.9 ms";
+      }
+
+      document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+        btn.setAttribute('aria-pressed', String(i === scenarioIdx));
+      });
+      document.querySelectorAll('.template-btn').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(btn.getAttribute('data-template') === activeTemplate));
+      });
+      document.querySelectorAll('.mode-btn').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(btn.getAttribute('data-mode') === activeAiMode));
+      });
+
+      const listEl = document.getElementById('transcript-list');
+      if (listEl) {
+        listEl.replaceChildren();
+        sc.segments.forEach((seg, idx) => {
+          const card = document.createElement('div');
+          card.className = 'transcript-card';
+          if (seg.starred) card.classList.add('is-starred');
+          if (idx === citedIdx) card.classList.add('is-cited');
+
+          const top = document.createElement('div');
+          top.className = 'transcript-card-top';
+
+          const meta = document.createElement('div');
+          meta.className = 'speaker-meta';
+
+          const tag = document.createElement('span');
+          tag.className = `speaker-tag ${seg.speakerType}`;
+          tag.textContent = seg.speaker[lang];
+
+          const ts = document.createElement('span');
+          ts.className = 'ts-code';
+          ts.textContent = seg.ts;
+
+          meta.append(tag, ts);
+
+          const bmBtn = document.createElement('button');
+          bmBtn.type = 'button';
+          bmBtn.className = 'bookmark-btn';
+          bmBtn.setAttribute('aria-pressed', String(seg.starred));
+          bmBtn.setAttribute('aria-label', `${dict.bookmarkAria} (${seg.ts})`);
+          bmBtn.textContent = seg.starred ? `★ ${dict.bookmarkLabel}` : `☆ ${dict.bookmarkLabel}`;
+          bmBtn.addEventListener('click', () => {
+            seg.starred = !seg.starred;
+            renderSimulator();
+          });
+
+          top.append(meta, bmBtn);
+
+          const body = document.createElement('p');
+          body.className = 'transcript-text';
+          body.textContent = seg.text[lang];
+
+          card.append(top, body);
+          listEl.appendChild(card);
+        });
+      }
+
+      const aiCard = document.getElementById('ai-output-card');
+      if (aiCard) {
+        aiCard.replaceChildren();
+        if (activeAiMode === "summary") {
+          const head = document.createElement('div');
+          head.className = 'ai-template-head';
+          const title = document.createElement('span');
+          title.className = 'ai-template-title';
+          title.textContent = (TEMPLATE_HEADS[activeTemplate] || TEMPLATE_HEADS.engineering)[lang];
+          head.appendChild(title);
+
+          const summaryP = document.createElement('p');
+          summaryP.className = 'ai-summary-text';
+          summaryP.textContent = sc.summaries[activeTemplate][lang];
+
+          const doneCount = sc.actions.filter((a) => a.done).length;
+          const actHead = document.createElement('div');
+          actHead.className = 'action-list-head';
+          const actLabel = document.createElement('span');
+          actLabel.textContent = dict.actionItemsHead;
+          const actRatio = document.createElement('span');
+          actRatio.textContent = `${doneCount} / ${sc.actions.length}`;
+          actHead.append(actLabel, actRatio);
+
+          const actList = document.createElement('div');
+          actList.className = 'action-items';
+
+          sc.actions.forEach((act) => {
+            const lbl = document.createElement('label');
+            lbl.className = 'action-item' + (act.done ? ' is-done' : '');
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = act.done;
+            cb.addEventListener('change', () => {
+              act.done = cb.checked;
+              renderSimulator();
+            });
+
+            const span = document.createElement('span');
+            span.className = 'action-item-text';
+            span.textContent = act.text[lang];
+
+            lbl.append(cb, span);
+            actList.appendChild(lbl);
+          });
+
+          aiCard.append(head, summaryP, actHead, actList);
+        } else {
+          const qBox = document.createElement('div');
+          qBox.className = 'qa-question-box';
+          qBox.textContent = `“${sc.qa.question[lang]}”`;
+
+          const aBox = document.createElement('p');
+          aBox.className = 'qa-answer-box';
+          aBox.textContent = sc.qa.answer[lang];
+
+          const citeRow = document.createElement('div');
+          citeRow.className = 'citation-row';
+
+          const citeBtn = document.createElement('button');
+          citeBtn.type = 'button';
+          citeBtn.className = 'citation-btn';
+          citeBtn.textContent = `[${sc.qa.citeTs}] ${dict.jumpSource}`;
+          citeBtn.addEventListener('click', () => {
+            citedIdx = sc.qa.citeIdx;
+            triggerSynthSweep();
+            renderSimulator();
+          });
+
+          const note = document.createElement('span');
+          note.className = 'qa-meta-note';
+          note.textContent = dict.qaGroundedNote;
+
+          citeRow.append(citeBtn, note);
+          aiCard.append(qBox, aBox, citeRow);
+        }
+      }
+    }
+
+    function switchScenario(nextIdx, animate = true) {
+      scenarioIdx = nextIdx;
+      activeTemplate = SCENARIOS[scenarioIdx].defaultTemplate;
+      citedIdx = activeAiMode === "qa" ? SCENARIOS[scenarioIdx].qa.citeIdx : -1;
+      triggerSynthSweep();
+
+      if (animate && meetingSplit && !prefersReducedMotion) {
+        meetingSplit.classList.add('changing');
+        setTimeout(() => {
+          renderSimulator();
+          meetingSplit.classList.remove('changing');
+        }, 160);
+      } else {
+        renderSimulator();
+      }
+    }
+
+    function triggerInstantSynthesis() {
+      activeAiMode = activeAiMode === "summary" ? "qa" : "summary";
+      citedIdx = activeAiMode === "qa" ? SCENARIOS[scenarioIdx].qa.citeIdx : -1;
+      triggerSynthSweep();
+      renderSimulator();
+    }
+
+    function renderStudioHotspot(pinIdx) {
+      const tab = STUDIO_TABS[activeStudioTab];
+      if (!tab) return;
+      activePinIdx = pinIdx;
+      const pinData = tab.pins[pinIdx] || tab.pins[0];
+      const lang = activeLang === "tr" ? "tr" : "en";
+
+      const numEl = document.getElementById("callout-num");
+      const titleEl = document.getElementById("callout-title");
+      const descEl = document.getElementById("callout-desc");
+      if (numEl) numEl.textContent = String(pinIdx + 1);
+      if (titleEl) titleEl.textContent = pinData.title[lang];
+      if (descEl) descEl.textContent = pinData.desc[lang];
+
+      document.querySelectorAll(".hotspot-pin").forEach((el, i) => {
+        el.setAttribute("aria-pressed", String(i === pinIdx));
+      });
+    }
+
+    function syncStudioMetaForLanguage() {
+      const tab = STUDIO_TABS[activeStudioTab];
+      if (!tab) return;
+      const lang = activeLang === "tr" ? "tr" : "en";
+      const dict = I18N[lang];
+      const winTitle = document.getElementById("window-title-text");
+      const lbTitle = document.getElementById("lightbox-title");
+      if (winTitle) winTitle.textContent = tab.title[lang];
+      if (lbTitle) lbTitle.textContent = tab.title[lang];
+
+      document.querySelectorAll('.studio-slide').forEach((imgEl, i) => {
+        if (dict.slideAlts[i]) imgEl.setAttribute('alt', dict.slideAlts[i]);
+      });
+      const lbImg = document.getElementById('lightbox-img');
+      if (lbImg && dict.slideAlts[activeStudioTab]) {
+        lbImg.setAttribute('alt', dict.slideAlts[activeStudioTab]);
+      }
+
+      renderStudioHotspot(activePinIdx);
+    }
+
+    function switchPreviewTab(tabIdx, animate = true) {
+      const tab = STUDIO_TABS[tabIdx];
+      const slides = document.querySelectorAll('.studio-slide');
+      const lbImg = document.getElementById('lightbox-img');
+      if (!tab || !slides.length) return;
+      activeStudioTab = tabIdx;
+      activePinIdx = 0;
+
+      slides.forEach((imgEl, i) => {
+        const isCurrent = i === tabIdx;
+        if (isCurrent) {
+          imgEl.hidden = false;
+          if (animate && !prefersReducedMotion) {
+            imgEl.classList.add('switching');
+            requestAnimationFrame(() => {
+              imgEl.classList.remove('switching');
+            });
+          }
+        } else {
+          imgEl.hidden = true;
+          imgEl.classList.remove('switching');
+        }
+      });
+
+      if (lbImg) lbImg.src = tab.img;
+
+      document.querySelectorAll('.inspector-card').forEach((card, i) => {
+        card.setAttribute('aria-selected', String(i === tabIdx));
+      });
+
+      document.querySelectorAll('.hotspot-pin').forEach((pinEl, i) => {
+        const cfg = tab.pins[i];
+        if (!cfg) return;
+        pinEl.style.setProperty('--x', cfg.x);
+        pinEl.style.setProperty('--y', cfg.y);
+      });
+
+      syncStudioMetaForLanguage();
+    }
+
+    function applyLanguage(lang, persist = false) {
+      const normalized = lang === "tr" ? "tr" : "en";
+      activeLang = normalized;
+      const dict = I18N[normalized];
+
+      document.documentElement.lang = normalized;
+      document.title = dict.pageTitle;
+      const descMeta = document.querySelector('meta[name="description"]');
+      if (descMeta) descMeta.setAttribute("content", dict.metaDescription);
+
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (key && Object.prototype.hasOwnProperty.call(dict, key)) {
+          el.textContent = dict[key];
+        }
+      });
+
+      const ariaMap = [
+        ["lang-switch", dict.langSwitchLabel],
+        ["brand-home-btn", dict.brandAria],
+        ["scene-presets", dict.presetsAria],
+        ["template-pills", dict.templateGroupAria],
+        ["mode-switch", dict.modeSwitchAria],
+        ["preview-tablist", dict.previewTabsLabel],
+        ["bottom-dock", dict.dockAria]
+      ];
+      for (const [id, label] of ariaMap) {
+        const node = document.getElementById(id);
+        if (node) node.setAttribute("aria-label", label);
+      }
+
+      document.querySelectorAll(".lang-btn").forEach((btn) => {
+        const isSelected = btn.getAttribute("data-lang") === normalized;
+        btn.setAttribute("aria-pressed", String(isSelected));
+      });
+
+      syncPauseButtonLabel();
+      renderSimulator();
+      syncStudioMetaForLanguage();
+
+      if (persist) {
+        try { localStorage.setItem("lm_lang", normalized); } catch (_) {}
+        document.cookie = `lm_lang=${normalized}; path=/; max-age=31536000; SameSite=Lax`;
+
+        const currentPath = window.location.pathname.replace(/\/+$/, "");
+        if (currentPath === "/tr" || currentPath === "/en") {
+          window.history.replaceState(null, "", `/${normalized}`);
+        }
+      }
+    }
+
+    document.querySelectorAll(".lang-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetLang = btn.getAttribute("data-lang");
+        if (targetLang && targetLang !== activeLang) {
+          applyLanguage(targetLang, true);
+        }
+      });
+    });
+
+    /* GPU-composited cursor spotlight */
+    const cursorGlow = document.getElementById("cursor-glow");
+    if (cursorGlow && !prefersReducedMotion && window.matchMedia('(pointer: fine)').matches) {
+      let glowRaf = null;
+      let pointerX = -999;
+      let pointerY = -999;
+      window.addEventListener("pointermove", (e) => {
+        pointerX = e.clientX - 260;
+        pointerY = e.clientY - 260;
+        if (!glowRaf) {
+          glowRaf = requestAnimationFrame(() => {
+            cursorGlow.style.opacity = "1";
+            cursorGlow.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+            glowRaf = null;
+          });
+        }
+      }, { passive: true });
+      document.addEventListener("pointerleave", () => {
+        cursorGlow.style.opacity = "0";
+      });
+    }
+
+    /* Animated 0.06 ms FTS5 search count-up on load */
+    const ftsCounterEl = document.getElementById("fts-counter");
+    if (ftsCounterEl && !prefersReducedMotion) {
+      const targetVal = 0.06;
+      const startTs = performance.now();
+      const duration = 700;
+      const tick = (now) => {
+        const progress = Math.min(1, (now - startTs) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = (targetVal * eased).toFixed(2);
+        ftsCounterEl.textContent = `${current} ms`;
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    /* Scene navigation */
+    let currentScene = 0;
+    const totalScenes = 3;
+    let isTransitioning = false;
+
+    function goScene(index) {
+      if (index < 0 || index >= totalScenes || index === currentScene) return;
+      isTransitioning = true;
+      currentScene = index;
+      document.body.setAttribute('data-scene', String(currentScene));
+
+      for (let i = 0; i < totalScenes; i++) {
+        const el = document.getElementById('scene-' + i);
+        el.classList.remove('active', 'prev');
+        if (i === currentScene) {
+          el.classList.add('active');
+          el.removeAttribute('inert');
+        } else {
+          if (i < currentScene) el.classList.add('prev');
+          el.setAttribute('inert', '');
+        }
+      }
+
+      document.querySelectorAll('.dock-btn').forEach((b, i) => {
+        const isCurrent = i === currentScene;
+        b.classList.toggle('active', isCurrent);
+        if (isCurrent) b.setAttribute('aria-current', 'step');
+        else b.removeAttribute('aria-current');
+      });
+
+      document.querySelectorAll('.rail-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === currentScene);
+      });
+
+      setTimeout(() => { isTransitioning = false; }, 480);
+    }
+
+    document.getElementById('brand-home-btn')?.addEventListener('click', () => goScene(0));
+    document.getElementById('scroll-next-btn')?.addEventListener('click', () => goScene(1));
+    document.querySelectorAll('.dock-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        goScene(Number.parseInt(btn.getAttribute('data-scene-target') || '0', 10));
+      });
+    });
+    document.querySelectorAll('.rail-dot').forEach((dot) => {
+      dot.addEventListener('click', () => {
+        goScene(Number.parseInt(dot.getAttribute('data-rail-target') || '0', 10));
+      });
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if (isTransitioning || studioLightbox?.open) return;
+      const activeSceneEl = document.getElementById('scene-' + currentScene);
+      if (activeSceneEl && activeSceneEl.scrollHeight > activeSceneEl.clientHeight + 8) {
+        const atTop = activeSceneEl.scrollTop <= 2;
+        const atBottom = activeSceneEl.scrollTop + activeSceneEl.clientHeight >= activeSceneEl.scrollHeight - 2;
+        if (e.deltaY > 0 && !atBottom) return;
+        if (e.deltaY < 0 && !atTop) return;
+      }
+      if (Math.abs(e.deltaY) < 18) return;
+      if (e.deltaY > 0 && currentScene < totalScenes - 1) goScene(currentScene + 1);
+      else if (e.deltaY < 0 && currentScene > 0) goScene(currentScene - 1);
+    }, { passive: true });
+
+    window.addEventListener('keydown', (e) => {
+      if (studioLightbox?.open) {
+        if (e.key === 'ArrowLeft') {
+          switchPreviewTab((activeStudioTab + STUDIO_TABS.length - 1) % STUDIO_TABS.length, false);
+        } else if (e.key === 'ArrowRight') {
+          switchPreviewTab((activeStudioTab + 1) % STUDIO_TABS.length, false);
+        }
+        return;
+      }
+
+      if (e.target && e.target.closest?.('#preview-tablist')) {
+        return;
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        if (currentScene < totalScenes - 1) goScene(currentScene + 1);
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        if (currentScene > 0) goScene(currentScene - 1);
+      } else if (currentScene === 1) {
+        const tag = e.target?.tagName;
+        const isInteractiveTarget = tag === 'BUTTON' || tag === 'INPUT' || tag === 'A' || tag === 'TEXTAREA';
+        if ((e.code === 'Space' && !isInteractiveTarget) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g')) {
+          e.preventDefault();
+          triggerInstantSynthesis();
+        }
+      }
+    });
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      if (isTransitioning || studioLightbox?.open || e.changedTouches.length === 0) return;
+      const activeSceneEl = document.getElementById('scene-' + currentScene);
+      const dy = touchStartY - e.changedTouches[0].clientY;
+      if (activeSceneEl && activeSceneEl.scrollHeight > activeSceneEl.clientHeight + 8) {
+        const atTop = activeSceneEl.scrollTop <= 2;
+        const atBottom = activeSceneEl.scrollTop + activeSceneEl.clientHeight >= activeSceneEl.scrollHeight - 2;
+        if (dy > 45 && !atBottom) return;
+        if (dy < -45 && !atTop) return;
+      }
+      if (Math.abs(dy) > 45) {
+        if (dy > 0 && currentScene < totalScenes - 1) goScene(currentScene + 1);
+        else if (dy < 0 && currentScene > 0) goScene(currentScene - 1);
+      }
+    }, { passive: true });
+
+    /* Platform-aware topbar download */
+    (function detectPlatformDownload() {
+      const topBtn = document.getElementById('topbar-download-btn');
+      if (!topBtn) return;
+      const ua = navigator.platform || navigator.userAgent;
+      const isMac = /Mac|iPhone|iPad/i.test(ua);
+      const isLinux = /Linux|X11/i.test(ua) && !/Android/i.test(navigator.userAgent || '');
+      if (isMac) {
+        topBtn.href = '/downloads/LocalMinutes-macOS.dmg';
+        topBtn.setAttribute('download', 'LocalMinutes-macOS.dmg');
+      } else if (isLinux) {
+        topBtn.href = '/downloads/LocalMinutes-Linux.tar.gz';
+        topBtn.setAttribute('download', 'LocalMinutes-Linux.tar.gz');
+      }
+    })();
+
+    /* Simulator event wiring */
+    document.querySelectorAll('.preset-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = Number.parseInt(btn.getAttribute('data-preset') || '0', 10);
+        switchScenario(idx, true);
+      });
+    });
+
+    document.getElementById('btn-sim-synth')?.addEventListener('click', triggerInstantSynthesis);
+
+    pauseBtn?.addEventListener('click', () => {
+      demoPaused = !demoPaused;
+      syncPauseButtonLabel();
+    });
+
+    document.querySelectorAll('.template-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tpl = btn.getAttribute('data-template');
+        if (!tpl) return;
+        activeTemplate = tpl;
+        activeAiMode = 'summary';
+        citedIdx = -1;
+        triggerSynthSweep();
+        renderSimulator();
+      });
+    });
+
+    document.querySelectorAll('.mode-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode');
+        if (!mode || mode === activeAiMode) return;
+        activeAiMode = mode;
+        citedIdx = activeAiMode === 'qa' ? SCENARIOS[scenarioIdx].qa.citeIdx : -1;
+        triggerSynthSweep();
+        renderSimulator();
+      });
+    });
+
+    setInterval(() => {
+      if (demoPaused || currentScene !== 1) return;
+      switchScenario((scenarioIdx + 1) % SCENARIOS.length, true);
+    }, 4400);
+
+    /* Studio Preview Inspector Tabs + Keyboard Navigation + Hotspots */
+    const inspectorCards = Array.from(document.querySelectorAll('.inspector-card'));
+    inspectorCards.forEach((card, idx) => {
+      card.addEventListener('click', () => switchPreviewTab(idx, true));
+      card.addEventListener('keydown', (e) => {
+        let targetIdx = null;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+          targetIdx = (idx + 1) % inspectorCards.length;
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+          targetIdx = (idx + inspectorCards.length - 1) % inspectorCards.length;
+        } else if (e.key === 'Home') {
+          targetIdx = 0;
+        } else if (e.key === 'End') {
+          targetIdx = inspectorCards.length - 1;
+        }
+        if (targetIdx !== null) {
+          e.preventDefault();
+          inspectorCards[targetIdx].focus();
+          switchPreviewTab(targetIdx, true);
+        }
+      });
+    });
+
+    document.querySelectorAll('.hotspot-pin').forEach((pinEl) => {
+      const idx = Number.parseInt(pinEl.getAttribute('data-pin') || '0', 10);
+      pinEl.addEventListener('click', () => renderStudioHotspot(idx));
+      pinEl.addEventListener('mouseenter', () => renderStudioHotspot(idx));
+    });
+
+    /* Native Dialog Lightbox with Top-Layer Exit Fallback & closedby="any" Safari Fallback */
+    let supportsDisplayTransition;
+    function canTransitionDisplay() {
+      if (supportsDisplayTransition !== undefined) return supportsDisplayTransition;
+      if (!window.CSS?.supports?.('transition-behavior', 'allow-discrete') || !document.body) {
+        return false;
+      }
+      const probe = document.createElement('div');
+      probe.style.cssText = 'transition: display 1s allow-discrete !important; display: block;';
+      document.body.appendChild(probe);
+      getComputedStyle(probe).display;
+      probe.style.display = 'none';
+      supportsDisplayTransition = getComputedStyle(probe).display === 'block';
+      probe.remove();
+      return supportsDisplayTransition;
+    }
+
+    function supportsTopLayerExit() {
+      return window.CSS?.supports?.('overlay', 'auto') && canTransitionDisplay();
+    }
+
+    async function closeTopLayer(dialogEl) {
+      if (!dialogEl || !dialogEl.open) return;
+      if (!supportsTopLayerExit()) {
+        dialogEl.setAttribute('data-closing', '');
+        const animations = dialogEl.getAnimations({ subtree: true });
+        if (animations.length > 0) {
+          await Promise.race([
+            Promise.allSettled(animations.map((a) => a.finished)),
+            new Promise((r) => setTimeout(r, 600))
+          ]);
+        }
+        if (!dialogEl.hasAttribute('data-closing')) return;
+        dialogEl.removeAttribute('data-closing');
+      }
+      dialogEl.close();
+    }
+
+    function openLightbox() {
+      if (!studioLightbox || studioLightbox.open) return;
+      const tab = STUDIO_TABS[activeStudioTab];
+      const lbImg = document.getElementById('lightbox-img');
+      if (lbImg && tab) lbImg.src = tab.img;
+      syncStudioMetaForLanguage();
+      studioLightbox.showModal();
+    }
+
+    document.getElementById('btn-open-lightbox')?.addEventListener('click', openLightbox);
+    document.querySelectorAll('.studio-slide').forEach((imgEl) => {
+      imgEl.addEventListener('click', openLightbox);
+    });
+    document.getElementById('lightbox-close')?.addEventListener('click', () => closeTopLayer(studioLightbox));
+    document.getElementById('lightbox-prev')?.addEventListener('click', () => {
+      switchPreviewTab((activeStudioTab + STUDIO_TABS.length - 1) % STUDIO_TABS.length, false);
+    });
+    document.getElementById('lightbox-next')?.addEventListener('click', () => {
+      switchPreviewTab((activeStudioTab + 1) % STUDIO_TABS.length, false);
+    });
+
+    studioLightbox?.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      closeTopLayer(studioLightbox);
+    });
+
+    studioLightbox?.addEventListener('close', () => {
+      studioLightbox.returnValue = '';
+    });
+
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      const outside = (e, dialog) => {
+        const r = dialog.getBoundingClientRect();
+        return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+      };
+      for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+        let pressedOutside = false;
+        dialog.addEventListener('pointerdown', (e) => {
+          pressedOutside = outside(e, dialog);
+        });
+        dialog.addEventListener('pointerup', (e) => {
+          if (pressedOutside && outside(e, dialog)) {
+            pressedOutside = false;
+            closeTopLayer(dialog);
+          }
+        });
+      }
+    }
+
+    /* 3D Tilt on Studio Window */
+    const tiltCard = document.getElementById('studio-tilt-card');
+    if (tiltCard && !prefersReducedMotion && window.matchMedia('(pointer: fine)').matches) {
+      tiltCard.addEventListener('pointermove', (e) => {
+        const rect = tiltCard.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        tiltCard.style.transform = `rotateX(${(-y * 4.5).toFixed(2)}deg) rotateY(${(x * 5.5).toFixed(2)}deg)`;
+      });
+      tiltCard.addEventListener('pointerleave', () => {
+        tiltCard.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      });
+    }
+
+    applyLanguage(detectClientLang(), false);
+    switchPreviewTab(0, false);
+  </script>
+</body>
+</html>

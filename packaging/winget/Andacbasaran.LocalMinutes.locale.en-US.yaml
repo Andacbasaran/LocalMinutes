@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: Andacbasaran.LocalMinutes
+PackageVersion: 1.0.0
+PackageLocale: en-US
+Publisher: Andac Basaran
+PublisherUrl: https://localminutes.andacbasaran.com
+PublisherSupportUrl: https://github.com/Andacbasaran/LocalMinutes/issues
+PackageName: LocalMinutes
+PackageUrl: https://localminutes.andacbasaran.com
+License: MIT
+LicenseUrl: https://github.com/Andacbasaran/LocalMinutes/blob/main/LICENSE
+ShortDescription: 100% offline, bot-free live meeting & lecture transcription, action items, Q&A, and summary studio.
+Description: >-
+  LocalMinutes records microphone and system meeting audio natively without joining any
+  meeting bot, transcribes locally on CPU with 0 MB VRAM via faster-whisper INT8 and
+  anti-aliased polyphase resampling, stores searchable archives in SQLite FTS5, and delivers
+  Granola-style private notes, persistent action items, Ask This Meeting BM25/Ollama Q&A,
+  Strict Air-Gapped Privacy Mode, and Obsidian YAML Markdown / WebVTT / SRT / JSON exports.
+Tags:
+  - meeting
+  - transcription
+  - whisper
+  - faster-whisper
+  - offline
+  - privacy
+  - bot-free
+  - summarization
+  - ollama
+  - obsidian
+  - notes
+ReleaseNotesUrl: https://github.com/Andacbasaran/LocalMinutes/releases/tag/v1.0.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

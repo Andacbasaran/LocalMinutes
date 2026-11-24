@@ -1,0 +1,32 @@
+{
+    "version": "1.0.0",
+    "description": "100% offline, bot-free live meeting & lecture transcription, action items, local Q&A, and summary studio.",
+    "homepage": "https://localminutes.andacbasaran.com",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Andacbasaran/LocalMinutes/releases/download/v1.0.0/LocalMinutes-Portable-v1.0.0-Windows-x64.zip",
+            "hash": "REPLACE_WITH_SHA256_FROM_RELEASE_SHA256SUMS_TXT"
+        }
+    },
+    "shortcuts": [
+        [
+            "LocalMinutes.exe",
+            "LocalMinutes"
+        ]
+    ],
+    "notes": "Windows WASAPI Loopback works out-of-the-box with zero extra drivers. Optional local LLM summaries work automatically with Ollama (https://ollama.com).",
+    "checkver": {
+        "github": "https://github.com/Andacbasaran/LocalMinutes"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/Andacbasaran/LocalMinutes/releases/download/v$version/LocalMinutes-Portable-v$version-Windows-x64.zip",
+                "hash": {
+                    "url": "$baseurl/SHA256SUMS.txt"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,39 @@
+name: Audio / App Compatibility Report
+description: Report how LocalMinutes captures and transcribes audio with a specific meeting app, OS audio router, or Ollama model.
+title: "[Compat]: "
+labels: ["compatibility"]
+body:
+  - type: input
+    id: meeting_app
+    attributes:
+      label: Meeting / Media App
+      placeholder: "e.g. Zoom, Microsoft Teams, Google Meet (Chrome), Discord, YouTube Lecture"
+    validations:
+      required: true
+  - type: input
+    id: audio_router
+    attributes:
+      label: OS & Loopback Backend
+      placeholder: "e.g. Windows 11 WASAPI, macOS Sonoma + BlackHole 2ch, Ubuntu 24.04 PipeWire .monitor"
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: Compatibility Status
+      options:
+        - Works flawlessly (Verified)
+        - Works with minor workaround
+        - Issue / Broken
+    validations:
+      required: true
+  - type: input
+    id: whisper_model
+    attributes:
+      label: Whisper Model & CPU Performance
+      placeholder: "e.g. small (INT8, Apple M1 Pro / Ryzen 7), real-time with 0 MB VRAM"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes & Setup Tips
+      placeholder: Share any helpful routing tips, Multi-Output Device notes, or Ollama model recommendations.

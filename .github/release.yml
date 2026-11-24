@@ -1,0 +1,25 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: New Features & Intelligence
+      labels:
+        - enhancement
+        - feature
+    - title: Bug Fixes & Stability
+      labels:
+        - bug
+        - fix
+    - title: Audio & Platform Compatibility
+      labels:
+        - compatibility
+    - title: Documentation & Packaging
+      labels:
+        - documentation
+        - packaging
+    - title: Other Changes
+      labels:
+        - "*"

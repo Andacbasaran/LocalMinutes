@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.locale.1.6.0.schema.json
+PackageIdentifier: Andacbasaran.LocalMinutes
+PackageVersion: 1.0.0
+PackageLocale: tr-TR
+Publisher: Andac Basaran
+PublisherUrl: https://localminutes.andacbasaran.com
+PublisherSupportUrl: https://github.com/Andacbasaran/LocalMinutes/issues
+PackageName: LocalMinutes
+PackageUrl: https://localminutes.andacbasaran.com
+License: MIT
+LicenseUrl: https://github.com/Andacbasaran/LocalMinutes/blob/main/LICENSE
+ShortDescription: "%100 çevrimdışı, botsuz canlı toplantı & ders transkripsiyonu, aksiyon maddeleri, yerel Soru-Cevap ve özet stüdyosu."
+Description: >-
+  LocalMinutes, toplantılarınıza hiçbir bot katılmadan mikrofon ve sistem sesini yerel olarak
+  yakalar, 0 MB VRAM ile faster-whisper INT8 üzerinden gerçek zamanlı deşifre eder, SQLite FTS5
+  ile milisaniyenin altında arar ve Granola tarzı özel notlar, kalıcı görev takibi, yerel BM25/Ollama
+  Soru-Cevap, Katı Air-Gapped Gizlilik Modu ile Obsidian Markdown / WebVTT / SRT / JSON dışa aktarım sunar.
+ReleaseNotesUrl: https://github.com/Andacbasaran/LocalMinutes/releases/tag/v1.0.0
+ManifestType: locale
+ManifestVersion: 1.6.0
