@@ -27,12 +27,12 @@ except ImportError:  # pragma: no cover
 
 try:
     import pyaudiowpatch as pyaudio
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     pyaudio = None  # type: ignore[assignment]
 
 try:
     import sounddevice as sd
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover - headless CI without PulseAudio/PortAudio server
     sd = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
