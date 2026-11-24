@@ -1947,10 +1947,18 @@
       #scene-1,
       #scene-2 {
         overflow-y: auto;
+        overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
         justify-content: flex-start;
         padding-top: 72px;
-        padding-bottom: 84px;
+        padding-bottom: 108px;
+      }
+
+      .demo-card,
+      .studio-perspective,
+      .studio-frame {
+        min-width: 0;
+        max-width: 100%;
       }
 
       .meeting-split {
@@ -1958,7 +1966,8 @@
       }
 
       .studio-showcase {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
         max-width: 580px;
         gap: 10px;
         margin-bottom: 12px;
@@ -2057,7 +2066,7 @@
 
       #scene-1,
       #scene-2 {
-        padding: 64px 14px 82px;
+        padding: 64px 14px 108px;
       }
 
       #scene-2 .eyebrow {
