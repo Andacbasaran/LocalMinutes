@@ -1934,12 +1934,14 @@
     }
 
     @media (max-height: 700px) {
+      #scene-0,
       #scene-1,
       #scene-2 {
         overflow-y: auto;
+        overflow-x: hidden;
         justify-content: flex-start;
         padding-top: 72px;
-        padding-bottom: 84px;
+        padding-bottom: 108px;
       }
     }
 
@@ -2398,7 +2400,7 @@
               </div>
             </div>
 
-            <div class="hotspot-callout" id="hotspot-callout">
+            <div class="hotspot-callout" id="hotspot-callout" aria-live="polite">
               <div class="hotspot-callout-main">
                 <span class="hotspot-callout-badge" id="callout-num">1</span>
                 <span><strong id="callout-title">Çift Kanallı Canlı Transkript:</strong> <span id="callout-desc">Mikrofon (You) ve sistem sesi (Remote) ayrı kartlarda zaman damgası, yıldızlı yer imi ve konuşma oranı çubuğuyla kaydedilir.</span></span>
@@ -2494,7 +2496,7 @@
   <!-- Native Fullscreen Studio Lightbox -->
   <dialog id="studio-lightbox" class="studio-lightbox" closedby="any" aria-labelledby="lightbox-title">
     <div class="lightbox-bar">
-      <h1 class="lightbox-title" id="lightbox-title">LocalMinutes Studio 2.0 · 1. Canlı Toplantı Stüdyosu</h1>
+      <h2 class="lightbox-title" id="lightbox-title">LocalMinutes Studio 2.0 · 1. Canlı Toplantı Stüdyosu</h2>
       <div class="lightbox-actions">
         <button type="button" class="lightbox-btn" id="lightbox-prev" data-i18n="lightboxPrev">← Önceki</button>
         <button type="button" class="lightbox-btn" id="lightbox-next" data-i18n="lightboxNext">Sonraki →</button>
@@ -3381,7 +3383,8 @@
 
       if (persist) {
         try { localStorage.setItem("lm_lang", normalized); } catch (_) {}
-        document.cookie = `lm_lang=${normalized}; path=/; max-age=31536000; SameSite=Lax`;
+        const secureAttr = window.location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = `lm_lang=${normalized}; path=/; max-age=31536000; SameSite=Lax${secureAttr}`;
 
         const currentPath = window.location.pathname.replace(/\/+$/, "");
         if (currentPath === "/tr" || currentPath === "/en") {
@@ -3554,15 +3557,20 @@
     (function detectPlatformDownload() {
       const topBtn = document.getElementById('topbar-download-btn');
       if (!topBtn) return;
-      const ua = navigator.platform || navigator.userAgent;
-      const isMac = /Mac|iPhone|iPad/i.test(ua);
-      const isLinux = /Linux|X11/i.test(ua) && !/Android/i.test(navigator.userAgent || '');
+      const fullUa = navigator.userAgent || '';
+      const plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || fullUa;
+      const isIOS = /iPhone|iPad|iPod/i.test(fullUa) || (/Mac/i.test(plat) && navigator.maxTouchPoints > 1);
+      const isMac = !isIOS && /Mac/i.test(plat);
+      const isLinux = /Linux|X11/i.test(plat) && !/Android/i.test(fullUa);
       if (isMac) {
         topBtn.href = '/downloads/LocalMinutes-macOS.dmg';
         topBtn.setAttribute('download', 'LocalMinutes-macOS.dmg');
       } else if (isLinux) {
         topBtn.href = '/downloads/LocalMinutes-Linux.tar.gz';
         topBtn.setAttribute('download', 'LocalMinutes-Linux.tar.gz');
+      } else if (isIOS || /Android/i.test(fullUa)) {
+        topBtn.href = 'https://github.com/Andacbasaran/LocalMinutes/releases/latest';
+        topBtn.removeAttribute('download');
       }
     })();
 

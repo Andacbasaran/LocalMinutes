@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
+import time
 from pathlib import Path
 from typing import Callable, Optional, Protocol
 
@@ -38,18 +40,33 @@ class FileTranscriberEngine(Protocol):
     ) -> tuple[list[tuple[float, float, str]], float]: ...
 
 
-def _transcode_with_ffmpeg(src_path: Path, dst_wav: Path) -> bool:
-    """Use system ffmpeg (if installed) to transcode tricky containers to 16 kHz mono WAV."""
+def _transcode_with_ffmpeg(
+    src_path: Path,
+    dst_wav: Path,
+    cancel_event: Optional[threading.Event] = None,
+    timeout_sec: float = 300.0,
+) -> bool:
+    """Use system ffmpeg (if installed) to transcode tricky containers to 16 kHz mono WAV cancellably."""
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
         return False
+    if cancel_event and cancel_event.is_set():
+        return False
+
+    resolved_src = str(src_path.resolve())
+    resolved_dst = str(dst_wav.resolve())
+    creationflags = (
+        getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
+    )
+
+    proc: Optional[subprocess.Popen[bytes]] = None
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             [
                 ffmpeg,
                 "-y",
                 "-i",
-                str(src_path),
+                resolved_src,
                 "-vn",
                 "-ac",
                 "1",
@@ -57,15 +74,36 @@ def _transcode_with_ffmpeg(src_path: Path, dst_wav: Path) -> bool:
                 "16000",
                 "-f",
                 "wav",
-                str(dst_wav),
+                resolved_dst,
             ],
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=creationflags,
         )
+        deadline = time.monotonic() + max(1.0, float(timeout_sec))
+        while proc.poll() is None:
+            if cancel_event and cancel_event.is_set():
+                proc.terminate()
+                try:
+                    proc.wait(timeout=3.0)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=2.0)
+                return False
+            if time.monotonic() >= deadline:
+                proc.kill()
+                proc.wait(timeout=2.0)
+                logger.warning("ffmpeg fallback transcode timed out after %.0fs", timeout_sec)
+                return False
+            time.sleep(0.2)
         return proc.returncode == 0 and dst_wav.exists() and dst_wav.stat().st_size > 44
     except Exception as exc:
+        if proc is not None and proc.poll() is None:
+            try:
+                proc.kill()
+                proc.wait(timeout=2.0)
+            except Exception:
+                pass
         logger.warning("ffmpeg fallback transcode failed: %s", exc)
         return False
 
@@ -109,7 +147,9 @@ def transcribe_media_file(
             tmp_wav = tmp_dir / "normalized_16k.wav"
             if on_status:
                 on_status("Direct decode failed; transcoding via system ffmpeg...")
-            if not _transcode_with_ffmpeg(path, tmp_wav):
+            if not _transcode_with_ffmpeg(path, tmp_wav, cancel_event=cancel_event):
+                if cancel_event and cancel_event.is_set():
+                    return [], 0.0
                 raise primary_exc
             raw_segments, duration = engine.transcribe_file_segments(
                 tmp_wav,

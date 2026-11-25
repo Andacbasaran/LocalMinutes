@@ -155,6 +155,14 @@ def build_app_bundle(base_dir: Path, icns_path: Path | None, arch: str) -> Path:
         "certifi",
         "--collect-submodules",
         "localminutes",
+        "--hidden-import",
+        "PyQt6.QtNetwork",
+        "--hidden-import",
+        "scipy.signal",
+        "--hidden-import",
+        "httpx",
+        "--hidden-import",
+        "certifi",
     ]
     if icns_path and icns_path.is_file():
         cmd.extend(["--icon", str(icns_path)])

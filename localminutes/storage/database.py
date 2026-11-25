@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -13,7 +14,47 @@ from typing import Any, Optional
 from localminutes.models import ActionItem, Meeting, SummaryResult, TranscriptSegment
 
 _FTS_TOKEN_RE = re.compile(r"[0-9A-Za-z_çğıöşüÇĞİÖŞÜ]+", re.UNICODE)
-_SPECIAL_SYMBOL_RE = re.compile(r"[+#$@./\\:-]")
+_SPECIAL_SYMBOL_RE = re.compile(r"[+#$@./\\:%_-]")
+
+_NON_ASSIGNEE_LABELS = frozenset(
+    {
+        "note",
+        "notes",
+        "todo",
+        "to-do",
+        "to do",
+        "step",
+        "http",
+        "https",
+        "ftp",
+        "mailto",
+        "warning",
+        "warn",
+        "important",
+        "info",
+        "reminder",
+        "action",
+        "action item",
+        "decision",
+        "risk",
+        "blocker",
+        "deadline",
+        "due",
+        "update",
+        "not",
+        "uyarı",
+        "önemli",
+    }
+)
+
+
+def _escape_like(value: str) -> str:
+    """Escape SQLite LIKE wildcards (\\, %, _) for queries using ESCAPE '\\'."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _word_count(text: str) -> int:
+    return len((text or "").split())
 
 
 def _extract_assignee(item_text: str) -> tuple[str, str]:
@@ -21,9 +62,30 @@ def _extract_assignee(item_text: str) -> tuple[str, str]:
     cleaned = item_text.strip().lstrip("-•*☐☑[] ").strip()
     if ":" in cleaned:
         prefix, rest = cleaned.split(":", 1)
+        # Reject URL schemes (http://, https://, file://, etc.)
+        if rest.startswith("//"):
+            return "", cleaned
         prefix_clean = prefix.strip()
         rest_clean = rest.strip()
-        if 1 <= len(prefix_clean) <= 28 and len(prefix_clean.split()) <= 3 and rest_clean:
+        if not prefix_clean or not rest_clean:
+            return "", cleaned
+        # Reject pure digits or time expressions like "14:30"
+        if prefix_clean.isdigit() or re.fullmatch(r"[\d\s.\-/+]+", prefix_clean):
+            return "", cleaned
+        low = prefix_clean.lower()
+        first_word = low.split()[0]
+        if low in _NON_ASSIGNEE_LABELS or first_word in (
+            "note",
+            "todo",
+            "step",
+            "http",
+            "https",
+            "warning",
+        ):
+            return "", cleaned
+        if not any(ch.isalpha() for ch in prefix_clean):
+            return "", cleaned
+        if 1 <= len(prefix_clean) <= 28 and len(prefix_clean.split()) <= 3:
             return prefix_clean, rest_clean
     return "", cleaned
 
@@ -38,9 +100,22 @@ class MeetingDatabase:
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON;")
+        self._conn.execute("PRAGMA busy_timeout = 5000;")
         self._conn.execute("PRAGMA journal_mode = WAL;")
         self._init_schema()
         self._run_migrations()
+        self._tighten_permissions()
+
+    def _tighten_permissions(self) -> None:
+        if os.name != "posix":
+            return
+        for suffix in ("", "-wal", "-shm"):
+            p = Path(str(self.db_path) + suffix)
+            if p.exists():
+                try:
+                    os.chmod(p, 0o600)
+                except OSError:
+                    pass
 
     def _init_schema(self) -> None:
         with self._lock, self._conn:
@@ -66,6 +141,7 @@ class MeetingDatabase:
                     start_sec REAL NOT NULL DEFAULT 0.0,
                     end_sec REAL NOT NULL DEFAULT 0.0,
                     is_bookmarked INTEGER NOT NULL DEFAULT 0,
+                    word_count INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE
                 );
@@ -125,6 +201,25 @@ class MeetingDatabase:
                 self._conn.execute(
                     "ALTER TABLE segments ADD COLUMN is_bookmarked INTEGER NOT NULL DEFAULT 0"
                 )
+            if "word_count" not in seg_cols:
+                self._conn.execute(
+                    "ALTER TABLE segments ADD COLUMN word_count INTEGER NOT NULL DEFAULT 0"
+                )
+                cur = self._conn.execute("SELECT id, text FROM segments")
+                batch: list[tuple[int, int]] = []
+                for row in cur:
+                    batch.append((_word_count(str(row["text"])), int(row["id"])))
+                    if len(batch) >= 500:
+                        self._conn.executemany(
+                            "UPDATE segments SET word_count = ? WHERE id = ?",
+                            batch,
+                        )
+                        batch.clear()
+                if batch:
+                    self._conn.executemany(
+                        "UPDATE segments SET word_count = ? WHERE id = ?",
+                        batch,
+                    )
 
             # Ensure action_items table exists on migrated DBs
             self._conn.execute(
@@ -280,11 +375,12 @@ class MeetingDatabase:
     def add_segment(self, segment: TranscriptSegment) -> TranscriptSegment:
         if segment.meeting_id is None:
             raise ValueError("TranscriptSegment.meeting_id must be set before saving.")
+        wc = _word_count(segment.text)
         with self._lock, self._conn:
             cur = self._conn.execute(
                 """
-                INSERT INTO segments (meeting_id, speaker, text, start_sec, end_sec, is_bookmarked, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO segments (meeting_id, speaker, text, start_sec, end_sec, is_bookmarked, word_count, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     segment.meeting_id,
@@ -293,6 +389,7 @@ class MeetingDatabase:
                     segment.start_sec,
                     segment.end_sec,
                     1 if segment.is_bookmarked else 0,
+                    wc,
                     segment.created_at,
                 ),
             )
@@ -312,10 +409,11 @@ class MeetingDatabase:
             for seg in segments:
                 if seg.meeting_id is None:
                     raise ValueError("TranscriptSegment.meeting_id must be set before saving.")
+                wc = _word_count(seg.text)
                 cur = self._conn.execute(
                     """
-                    INSERT INTO segments (meeting_id, speaker, text, start_sec, end_sec, is_bookmarked, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO segments (meeting_id, speaker, text, start_sec, end_sec, is_bookmarked, word_count, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         seg.meeting_id,
@@ -324,6 +422,7 @@ class MeetingDatabase:
                         seg.start_sec,
                         seg.end_sec,
                         1 if seg.is_bookmarked else 0,
+                        wc,
                         seg.created_at,
                     ),
                 )
@@ -347,6 +446,8 @@ class MeetingDatabase:
         if text is not None:
             fields.append("text = ?")
             values.append(text)
+            fields.append("word_count = ?")
+            values.append(_word_count(text))
         if speaker is not None:
             fields.append("speaker = ?")
             values.append(speaker)
@@ -537,13 +638,16 @@ class MeetingDatabase:
             self._conn.execute("DELETE FROM meetings WHERE id = ?", (meeting_id,))
 
     def get_archive_insights(self) -> dict[str, Any]:
-        """Compute global KPIs across the entire local SQLite archive."""
+        """Compute global KPIs across the entire local SQLite archive without loading text into RAM."""
         with self._lock:
             m_row = self._conn.execute(
                 "SELECT COUNT(*) AS cnt, COALESCE(SUM(duration_sec), 0.0) AS total_dur FROM meetings"
             ).fetchone()
-            seg_rows = self._conn.execute("SELECT text FROM segments").fetchall()
-            total_words = sum(len(str(r["text"]).split()) for r in seg_rows)
+            seg_row = self._conn.execute(
+                "SELECT COUNT(*) AS cnt, COALESCE(SUM(word_count), 0) AS total_words FROM segments"
+            ).fetchone()
+            total_segments = int(seg_row["cnt"]) if seg_row else 0
+            total_words = int(seg_row["total_words"]) if seg_row else 0
             open_tasks = self.count_open_action_items()
             done_row = self._conn.execute(
                 "SELECT COUNT(*) AS cnt FROM action_items WHERE completed = 1"
@@ -560,7 +664,7 @@ class MeetingDatabase:
             return {
                 "total_meetings": int(m_row["cnt"]) if m_row else 0,
                 "total_duration_sec": float(m_row["total_dur"]) if m_row else 0.0,
-                "total_segments": len(seg_rows),
+                "total_segments": total_segments,
                 "total_words": total_words,
                 "open_action_items": open_tasks,
                 "completed_action_items": int(done_row["cnt"]) if done_row else 0,
@@ -619,7 +723,7 @@ class MeetingDatabase:
         if not cleaned:
             return self.list_meetings(limit=limit)
 
-        like_pattern = f"%{cleaned}%"
+        like_pattern = f"%{_escape_like(cleaned)}%"
         has_special_symbols = bool(_SPECIAL_SYMBOL_RE.search(cleaned))
         tokens = _FTS_TOKEN_RE.findall(cleaned)
         fts_query = " AND ".join(f'"{t}"*' for t in tokens) if tokens else ""
@@ -630,10 +734,10 @@ class MeetingDatabase:
             rows = self._conn.execute(
                 """
                 SELECT id FROM meetings
-                WHERE title LIKE ?
-                   OR COALESCE(summary_json, '') LIKE ?
-                   OR COALESCE(notes, '') LIKE ?
-                   OR COALESCE(tags_json, '') LIKE ?
+                WHERE title LIKE ? ESCAPE '\\'
+                   OR COALESCE(summary_json, '') LIKE ? ESCAPE '\\'
+                   OR COALESCE(notes, '') LIKE ? ESCAPE '\\'
+                   OR COALESCE(tags_json, '') LIKE ? ESCAPE '\\'
                 """,
                 (like_pattern, like_pattern, like_pattern, like_pattern),
             ).fetchall()
@@ -641,7 +745,7 @@ class MeetingDatabase:
 
             if has_special_symbols or not fts_query:
                 seg_rows = self._conn.execute(
-                    "SELECT DISTINCT meeting_id FROM segments WHERE text LIKE ? OR speaker LIKE ?",
+                    "SELECT DISTINCT meeting_id FROM segments WHERE text LIKE ? ESCAPE '\\' OR speaker LIKE ? ESCAPE '\\'",
                     (like_pattern, like_pattern),
                 ).fetchall()
                 matched_ids.update(int(r["meeting_id"]) for r in seg_rows)
@@ -654,7 +758,7 @@ class MeetingDatabase:
                     matched_ids.update(int(r["meeting_id"]) for r in fts_rows)
                 except sqlite3.OperationalError:
                     seg_rows = self._conn.execute(
-                        "SELECT DISTINCT meeting_id FROM segments WHERE text LIKE ?",
+                        "SELECT DISTINCT meeting_id FROM segments WHERE text LIKE ? ESCAPE '\\'",
                         (like_pattern,),
                     ).fetchall()
                     matched_ids.update(int(r["meeting_id"]) for r in seg_rows)
@@ -662,12 +766,23 @@ class MeetingDatabase:
             if not matched_ids:
                 return []
 
-            placeholders = ",".join("?" for _ in matched_ids)
-            meetings_rows = self._conn.execute(
-                f"SELECT * FROM meetings WHERE id IN ({placeholders}) ORDER BY created_at DESC, id DESC LIMIT ?",
-                (*matched_ids, limit),
-            ).fetchall()
-            return [self._row_to_meeting(r) for r in meetings_rows]
+            id_list = list(matched_ids)
+            meetings_rows: list[sqlite3.Row] = []
+            chunk_size = 500
+            for idx in range(0, len(id_list), chunk_size):
+                chunk = id_list[idx : idx + chunk_size]
+                placeholders = ",".join("?" for _ in chunk)
+                meetings_rows.extend(
+                    self._conn.execute(
+                        f"SELECT * FROM meetings WHERE id IN ({placeholders})",
+                        chunk,
+                    ).fetchall()
+                )
+            meetings_rows.sort(
+                key=lambda r: (str(r["created_at"]), int(r["id"])),
+                reverse=True,
+            )
+            return [self._row_to_meeting(r) for r in meetings_rows[:limit]]
 
     def search_segments_fts(self, query: str, meeting_id: Optional[int] = None, limit: int = 25) -> list[int]:
         """Fast FTS5 segment lookup returning matching segment IDs (used in benchmarks & search)."""

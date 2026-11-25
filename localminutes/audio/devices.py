@@ -33,9 +33,8 @@ _MACOS_LOOPBACK_KEYWORDS = (
 _LINUX_LOOPBACK_KEYWORDS = (
     ".monitor",
     "monitor of",
-    "monitor",
-    "loopback",
     "pipewire-monitor",
+    "loopback",
 )
 
 
@@ -48,6 +47,10 @@ def is_virtual_loopback_name(name: str, platform_name: Optional[str] = None) -> 
     if plat == "darwin":
         return any(kw in low for kw in _MACOS_LOOPBACK_KEYWORDS)
     if plat.startswith("linux"):
+        if ".monitor" in low:
+            return True
+        if "mic" in low or "microphone" in low:
+            return False
         return any(kw in low for kw in _LINUX_LOOPBACK_KEYWORDS)
     # Windows fallback if using sounddevice instead of pyaudiowpatch
     return any(kw in low for kw in ("stereo mix", "wasapi loopback", "loopback", "vb-cable", "cable output"))
@@ -218,14 +221,10 @@ def find_device_by_index(
     device_index: int,
     is_loopback: bool = False,
 ) -> Optional[AudioDevice]:
-    """Look up an AudioDevice descriptor by index across enumerated devices."""
+    """Look up an AudioDevice descriptor by index within the requested device pool."""
     mics, lbs = list_audio_devices()
     pool = lbs if is_loopback else mics
     for dev in pool:
-        if dev.index == device_index:
-            return dev
-    # Fallback search across both pools in case user selected a custom virtual device
-    for dev in mics + lbs:
         if dev.index == device_index:
             return dev
     return None

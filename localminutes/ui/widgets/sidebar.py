@@ -210,6 +210,7 @@ class ArchiveSidebar(QFrame):
         self._list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._list.customContextMenuRequested.connect(self._open_context_menu)
         self._list.currentItemChanged.connect(self._on_current_changed)
+        self._list.itemClicked.connect(self._on_item_clicked)
         layout.addWidget(self._list, 1)
 
         # --- Bottom Pinned Privacy & Engine Status Card ---
@@ -286,6 +287,9 @@ class ArchiveSidebar(QFrame):
         self._count_label.setText(i18n.t("archive_count", count=self._list.count()))
         self.update_privacy_status(model, compute, air_gapped)
 
+    def current_search_query(self) -> str:
+        return self._search_input.text()
+
     def set_meetings(self, meetings: list[Meeting], selected_id: int | None = None) -> None:
         self._list.blockSignals(True)
         self._list.clear()
@@ -310,6 +314,16 @@ class ArchiveSidebar(QFrame):
         if current is None:
             return
         meeting_id = current.data(Qt.ItemDataRole.UserRole)
+        if meeting_id is not None:
+            self.set_active_view(0)
+            self.view_changed.emit(0)
+            self.meeting_selected.emit(int(meeting_id))
+
+    def _on_item_clicked(self, item: QListWidgetItem | None) -> None:
+        """Ensure clicking the already-selected meeting returns from Tasks/Settings to Studio."""
+        if item is None:
+            return
+        meeting_id = item.data(Qt.ItemDataRole.UserRole)
         if meeting_id is not None:
             self.set_active_view(0)
             self.view_changed.emit(0)

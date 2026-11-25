@@ -92,13 +92,31 @@ def _dir_size_bytes(path: Path) -> int:
     return total
 
 
+def _has_complete_model_bin(path: Path) -> bool:
+    """Return True only if `path` contains a non-empty `model.bin` CTranslate2 weights file."""
+    if not path.exists():
+        return False
+    if path.is_file():
+        try:
+            return path.name == "model.bin" and path.stat().st_size > 0
+        except OSError:
+            return False
+    for child in path.rglob("model.bin"):
+        try:
+            if child.is_file() and child.stat().st_size > 0:
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def list_cached_models(download_root: Optional[Path] = None) -> set[str]:
-    """Return exact set of Whisper model names currently present in the local cache directory."""
+    """Return exact set of Whisper model names with a verified non-empty `model.bin` in cache."""
     root = download_root or get_models_dir()
     cached: set[str] = set()
     for model_name in WHISPER_MODELS:
         paths = _match_cached_model_paths(model_name, root)
-        if any(_dir_size_bytes(p) > 0 for p in paths):
+        if any(_has_complete_model_bin(p) for p in paths):
             cached.add(model_name)
     return cached
 
@@ -110,8 +128,9 @@ def get_cached_model_info(download_root: Optional[Path] = None) -> dict[str, dic
     for model_name in WHISPER_MODELS:
         paths = _match_cached_model_paths(model_name, root)
         total_bytes = sum(_dir_size_bytes(p) for p in paths)
+        is_cached = any(_has_complete_model_bin(p) for p in paths)
         info[model_name] = {
-            "cached": total_bytes > 0,
+            "cached": is_cached,
             "size_mb": round(total_bytes / (1024.0 * 1024.0), 1) if total_bytes > 0 else 0.0,
             "approx_mb": WHISPER_MODEL_APPROX_MB.get(model_name, 500),
             "paths": paths,
@@ -147,6 +166,7 @@ class WhisperEngine:
         download_root: Optional[Path] = None,
         initial_prompt: str = "",
         cpu_threads: Optional[int] = None,
+        local_files_only: bool = False,
     ) -> None:
         self.model_size = model_size
         self.compute_type = compute_type
@@ -155,6 +175,7 @@ class WhisperEngine:
         self.download_root = download_root or get_models_dir()
         self.initial_prompt = (initial_prompt or "").strip()
         self.cpu_threads = cpu_threads or max(2, min(8, (os.cpu_count() or 4)))
+        self.local_files_only = bool(local_files_only)
         self._model = None
         self._lock = threading.Lock()
 
@@ -176,24 +197,41 @@ class WhisperEngine:
             safe_root = get_ct2_safe_path(str(self.download_root))
             last_exc: Optional[Exception] = None
 
-            for ctype in candidates:
-                try:
-                    if on_status:
-                        on_status(f"Loading Whisper model ({self.model_size}, {ctype.upper()})...")
-                    self._model = WhisperModel(
-                        self.model_size,
-                        device="cpu",
-                        compute_type=ctype,
-                        cpu_threads=self.cpu_threads,
-                        download_root=safe_root,
-                    )
-                    self.active_compute_type = ctype
-                    if on_status:
-                        on_status(f"Whisper ready ({self.model_size}, {ctype.upper()}).")
-                    return
-                except Exception as exc:
-                    last_exc = exc
-                    logger.warning("Whisper load failed with compute_type=%s: %s", ctype, exc)
+            prev_hf_offline = os.environ.get("HF_HUB_OFFLINE")
+            if self.local_files_only:
+                os.environ["HF_HUB_OFFLINE"] = "1"
+            try:
+                for ctype in candidates:
+                    try:
+                        if on_status:
+                            on_status(f"Loading Whisper model ({self.model_size}, {ctype.upper()})...")
+                        self._model = WhisperModel(
+                            self.model_size,
+                            device="cpu",
+                            compute_type=ctype,
+                            cpu_threads=self.cpu_threads,
+                            download_root=safe_root,
+                            local_files_only=self.local_files_only,
+                        )
+                        self.active_compute_type = ctype
+                        if on_status:
+                            on_status(f"Whisper ready ({self.model_size}, {ctype.upper()}).")
+                        return
+                    except Exception as exc:
+                        last_exc = exc
+                        logger.warning("Whisper load failed with compute_type=%s: %s", ctype, exc)
+            finally:
+                if self.local_files_only:
+                    if prev_hf_offline is None:
+                        os.environ.pop("HF_HUB_OFFLINE", None)
+                    else:
+                        os.environ["HF_HUB_OFFLINE"] = prev_hf_offline
+
+            if self.local_files_only:
+                raise RuntimeError(
+                    f"Air-Gapped mode: cached Whisper model '{self.model_size}' could not be loaded "
+                    f"locally without network access: {last_exc}"
+                ) from last_exc
 
             raise RuntimeError(
                 f"Failed to load Whisper '{self.model_size}' across compute types {candidates}: {last_exc}"

@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from localminutes import __version__
 from localminutes.audio.devices import get_loopback_setup_hint, list_audio_devices
+from localminutes.config import get_models_dir
 from localminutes.hardware import (
     HardwareProfile,
     RuntimeTuning,
@@ -33,7 +34,6 @@ from localminutes.models import SUMMARY_TEMPLATES, AppSettings, get_template_met
 from localminutes.summarization.summarizer import list_ollama_models
 from localminutes.transcription.engine import (
     WHISPER_MODELS,
-    WhisperEngine,
     delete_cached_model,
     get_cached_model_info,
 )
@@ -53,6 +53,7 @@ class SettingsView(QWidget):
     check_updates_requested = pyqtSignal()
     run_benchmark_requested = pyqtSignal()
     _model_dl_done = pyqtSignal(bool, str)
+    _ollama_models_loaded = pyqtSignal(list, str)
 
     def __init__(
         self,
@@ -68,6 +69,7 @@ class SettingsView(QWidget):
         self._tuning = tuning
         self._i18n = i18n
         self._model_dl_done.connect(self._on_model_download_finished)
+        self._ollama_models_loaded.connect(self._on_ollama_models_loaded)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 18, 20, 14)
@@ -348,16 +350,25 @@ class SettingsView(QWidget):
             self._dl_model_btn.setText(self._i18n.t("btn_download_model"))
 
     def _download_selected_model(self) -> None:
+        if self.chk_air_gapped.isChecked() or self._settings.air_gapped_mode:
+            self._model_status_label.setText(
+                "Air-Gapped Privacy Mode is active — outbound model downloads are blocked."
+            )
+            return
+
         model_name = str(self._model_combo.currentData() or "small")
-        compute = str(self._compute_combo.currentData() or "int8")
         self._dl_model_btn.setEnabled(False)
+        self._del_model_btn.setEnabled(False)
+        self._model_combo.setEnabled(False)
         self._dl_model_btn.setText("Downloading...")
         self._model_status_label.setText(f"Downloading Whisper '{model_name}' into local cache...")
 
         def _worker() -> None:
             try:
-                eng = WhisperEngine(model_size=model_name, compute_type=compute)
-                eng.load()
+                from faster_whisper.utils import download_model
+
+                cache_dir = str(get_models_dir())
+                download_model(model_name, cache_dir=cache_dir)
                 self._model_dl_done.emit(True, f"Model '{model_name}' cached and ready offline.")
             except Exception as exc:
                 self._model_dl_done.emit(False, f"Download error: {exc}")
@@ -377,6 +388,8 @@ class SettingsView(QWidget):
         self._populate_whisper_models()
         self._select_combo_data(self._model_combo, selected)
         self._dl_model_btn.setEnabled(True)
+        self._del_model_btn.setEnabled(True)
+        self._model_combo.setEnabled(True)
         self._update_model_cache_label()
         self._model_status_label.setText(message)
 
@@ -439,11 +452,21 @@ class SettingsView(QWidget):
     def _refresh_ollama_models(self) -> None:
         if self.chk_air_gapped.isChecked():
             return
+        url = self._ollama_url_edit.text().strip()
         current = self._ollama_model_combo.currentText().strip()
-        models = list_ollama_models(self._ollama_url_edit.text().strip())
+        self._scan_ollama_btn.setEnabled(False)
+
+        def _worker() -> None:
+            models = list_ollama_models(url)
+            self._ollama_models_loaded.emit(models, current)
+
+        threading.Thread(target=_worker, daemon=True, name="OllamaModelScanner").start()
+
+    def _on_ollama_models_loaded(self, models: list, current: str) -> None:
+        self._scan_ollama_btn.setEnabled(True)
         self._ollama_model_combo.clear()
         for m in models:
-            self._ollama_model_combo.addItem(m)
+            self._ollama_model_combo.addItem(str(m))
         if current:
             self._ollama_model_combo.setEditText(current)
         elif models:

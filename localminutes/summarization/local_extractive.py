@@ -44,8 +44,15 @@ _ACTION_PATTERNS = re.compile(
 )
 
 
+def tr_lower(text: str) -> str:
+    """Lowercase text cleanly for bilingual EN/TR without splitting Turkish 'İ' (U+0130 -> i + U+0307)."""
+    if not text:
+        return ""
+    return text.replace("\u0130", "i").lower().replace("\u0307", "")
+
+
 def _tokenize(text: str) -> list[str]:
-    words = re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜ0-9]{3,}", text.lower())
+    words = re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜ0-9]{3,}", tr_lower(text))
     return [w for w in words if w not in _STOPWORDS]
 
 
@@ -94,11 +101,12 @@ def extractive_summarize(
         scored.append((final_score, idx, seg))
 
         text_clean = seg.text.strip()
-        if _DECISION_PATTERNS.search(text_clean):
+        text_norm = tr_lower(text_clean)
+        if _DECISION_PATTERNS.search(text_norm):
             entry = f"{seg.speaker}: {text_clean}"
             if entry not in decisions:
                 decisions.append(entry)
-        if _ACTION_PATTERNS.search(text_clean):
+        if _ACTION_PATTERNS.search(text_norm):
             entry = f"{seg.speaker}: {text_clean}"
             if entry not in action_items:
                 action_items.append(entry)

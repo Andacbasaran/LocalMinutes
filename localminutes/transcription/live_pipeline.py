@@ -156,20 +156,25 @@ class LiveTranscriptionPipeline:
     def stop(self, wait_timeout: float = 15.0) -> None:
         if not self._running:
             return
-        self.flush_all()
         self._running = False
-        # Guarantee sentinel fits even if queue is completely saturated
-        try:
-            self._queue.put(None, timeout=1.0)
-        except queue.Full:
+        self.flush_all()
+        worker = self._worker
+        if worker is not None and worker.is_alive():
+            # Guarantee sentinel fits even if queue is completely saturated
             try:
-                self._queue.get_nowait()
-                self._queue.task_done()
-            except (queue.Empty, ValueError):
-                pass
-            self._queue.put(None)
-        if self._worker is not None and self._worker.is_alive():
-            self._worker.join(timeout=wait_timeout)
+                self._queue.put(None, timeout=1.0)
+            except queue.Full:
+                try:
+                    self._queue.get_nowait()
+                    self._queue.task_done()
+                except (queue.Empty, ValueError):
+                    pass
+                if worker.is_alive():
+                    try:
+                        self._queue.put(None, timeout=1.0)
+                    except queue.Full:
+                        pass
+            worker.join(timeout=wait_timeout)
         self._worker = None
 
     def _worker_loop(self) -> None:

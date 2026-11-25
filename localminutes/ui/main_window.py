@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 import tempfile
 import threading
 import time
+from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -14,6 +16,7 @@ import numpy as np
 from PyQt6.QtCore import QRect, QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QFont, QGuiApplication, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -147,6 +150,11 @@ class MainWindow(QMainWindow):
         self._is_recording = False
         self._is_paused = False
         self._is_importing = False
+        self._importing_meeting_id: Optional[int] = None
+        self._is_summarizing = False
+        self._is_enhancing = False
+        self._is_asking_qa = False
+        self._closing = False
         self._force_quit = False
         self._tray: Optional[QSystemTrayIcon] = None
 
@@ -631,6 +639,7 @@ class MainWindow(QMainWindow):
             template=self._settings.default_template,
         )
         assert meeting.id is not None
+        self._importing_meeting_id = meeting.id
         self._load_meeting(meeting.id)
         self._set_status(self._i18n.t("status_importing", name=file_path.name))
 
@@ -668,7 +677,10 @@ class MainWindow(QMainWindow):
         self, meeting_id: int, segments_obj: object, duration: float, was_cancelled: bool
     ) -> None:
         self._is_importing = False
+        self._importing_meeting_id = None
         self._import_cancel_event = None
+        if self._closing:
+            return
         self._import_btn.setEnabled(True)
         self._record_btn.setEnabled(True)
         self._progress_bar.setVisible(False)
@@ -676,9 +688,14 @@ class MainWindow(QMainWindow):
         self._cancel_import_btn.setEnabled(True)
 
         if isinstance(segments_obj, list) and segments_obj:
+            if self._db.get_meeting(meeting_id, include_segments=False) is None:
+                return
             valid = [s for s in segments_obj if isinstance(s, TranscriptSegment)]
-            self._db.add_segments_bulk(valid)
-            self._db.update_meeting(meeting_id, duration_sec=duration)
+            try:
+                self._db.add_segments_bulk(valid)
+                self._db.update_meeting(meeting_id, duration_sec=duration)
+            except sqlite3.IntegrityError:
+                return
             self._load_meeting(meeting_id)
             if was_cancelled:
                 self._set_status(
@@ -691,7 +708,10 @@ class MainWindow(QMainWindow):
 
     def _on_import_error(self, message: str) -> None:
         self._is_importing = False
+        self._importing_meeting_id = None
         self._import_cancel_event = None
+        if self._closing:
+            return
         self._import_btn.setEnabled(True)
         self._record_btn.setEnabled(True)
         self._progress_bar.setVisible(False)
@@ -711,8 +731,13 @@ class MainWindow(QMainWindow):
             self._current_meeting.notes = pending
             self._db.update_meeting(self._current_meeting.id, notes=pending)
 
-    def _refresh_archive(self, query: str = "") -> None:
-        meetings = self._db.search_meetings(query) if query.strip() else self._db.list_meetings()
+    def _refresh_archive(self, query: Optional[str] = None) -> None:
+        active_query = self._sidebar._search_input.text() if query is None else query
+        meetings = (
+            self._db.search_meetings(active_query)
+            if active_query.strip()
+            else self._db.list_meetings()
+        )
         selected_id = self._current_meeting.id if self._current_meeting else None
         self._sidebar.set_meetings(meetings, selected_id=selected_id)
 
@@ -787,6 +812,9 @@ class MainWindow(QMainWindow):
     def _delete_meeting(self, meeting_id: int) -> None:
         if self._is_recording and self._current_meeting and self._current_meeting.id == meeting_id:
             QMessageBox.warning(self, "Recording Active", "Stop recording before deleting this meeting.")
+            return
+        if self._is_importing and self._importing_meeting_id == meeting_id:
+            QMessageBox.warning(self, "Import Active", "Cancel or wait for the media import before deleting this meeting.")
             return
         reply = QMessageBox.question(
             self,
@@ -928,6 +956,8 @@ class MainWindow(QMainWindow):
             or self._engine.compute_type != self._settings.whisper_compute_type
             or (self._engine.language or "auto") != self._settings.whisper_language
             or self._engine.initial_prompt != self._settings.custom_vocabulary.strip()
+            or self._engine.local_files_only != self._settings.air_gapped_mode
+            or self._engine.cpu_threads != self._tuning.whisper_threads
         ):
             self._engine = WhisperEngine(
                 model_size=self._settings.whisper_model,
@@ -935,6 +965,7 @@ class MainWindow(QMainWindow):
                 language=self._settings.whisper_language,
                 initial_prompt=self._settings.custom_vocabulary,
                 cpu_threads=self._tuning.whisper_threads,
+                local_files_only=self._settings.air_gapped_mode,
             )
         return self._engine
 
@@ -1096,9 +1127,14 @@ class MainWindow(QMainWindow):
             self._timer_label.setText(format_timestamp(self._capture.elapsed_seconds))
 
     def _on_new_segment(self, segment: TranscriptSegment) -> None:
-        if not isinstance(segment, TranscriptSegment):
+        if self._closing or not isinstance(segment, TranscriptSegment):
             return
-        saved = self._db.add_segment(segment)
+        if self._db.get_meeting(segment.meeting_id, include_segments=False) is None:
+            return
+        try:
+            saved = self._db.add_segment(segment)
+        except (sqlite3.IntegrityError, sqlite3.ProgrammingError):
+            return
         if self._current_meeting and self._current_meeting.id == saved.meeting_id:
             self._current_meeting.segments.append(saved)
             self._transcript_view.append_segment(saved)
@@ -1109,7 +1145,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _start_summarization(self, template_key: str) -> None:
-        if not self._current_meeting or self._current_meeting.id is None:
+        if self._is_summarizing or not self._current_meeting or self._current_meeting.id is None:
             return
         self._flush_current_notes()
         if not self._current_meeting.segments:
@@ -1123,7 +1159,8 @@ class MainWindow(QMainWindow):
         meeting_id = self._current_meeting.id
         segments_copy = list(self._current_meeting.segments)
         notes_copy = self._current_meeting.notes
-        settings_copy = self._settings
+        settings_copy = replace(self._settings)
+        self._is_summarizing = True
 
         self._summary_panel.set_busy(True, "Generating summary & action items...")
 
@@ -1144,10 +1181,18 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_worker, daemon=True, name="SummarizerWorker").start()
 
     def _on_summary_done(self, meeting_id: int, summary: object) -> None:
+        self._is_summarizing = False
+        if self._closing:
+            return
         self._summary_panel.set_busy(False)
         if not isinstance(summary, SummaryResult):
             return
-        action_items = self._db.save_summary(meeting_id, summary, sync_action_items=True)
+        if self._db.get_meeting(meeting_id, include_segments=False) is None:
+            return
+        try:
+            action_items = self._db.save_summary(meeting_id, summary, sync_action_items=True)
+        except (sqlite3.IntegrityError, sqlite3.ProgrammingError):
+            return
         if self._current_meeting and self._current_meeting.id == meeting_id:
             self._current_meeting.summary = summary
             self._current_meeting.action_items = action_items
@@ -1158,12 +1203,15 @@ class MainWindow(QMainWindow):
         self._set_status(f"Summary ready ({summary.model_used}).")
 
     def _on_summary_error(self, error_msg: str) -> None:
+        self._is_summarizing = False
+        if self._closing:
+            return
         self._summary_panel.set_busy(False, "Summarization failed.")
         self._set_status(f"Summarization error: {error_msg}")
         QMessageBox.warning(self, "Summarization Error", error_msg)
 
     def _start_enhance_notes(self) -> None:
-        if not self._current_meeting or self._current_meeting.id is None:
+        if self._is_enhancing or not self._current_meeting or self._current_meeting.id is None:
             return
         self._flush_current_notes()
         if not self._current_meeting.segments:
@@ -1171,7 +1219,8 @@ class MainWindow(QMainWindow):
         meeting_id = self._current_meeting.id
         segs = list(self._current_meeting.segments)
         notes = self._current_meeting.notes
-        settings_copy = self._settings
+        settings_copy = replace(self._settings)
+        self._is_enhancing = True
         self._summary_panel.set_enhance_busy(True)
 
         def _worker() -> None:
@@ -1184,25 +1233,37 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_worker, daemon=True, name="EnhanceNotesWorker").start()
 
     def _on_enhance_done(self, meeting_id: int, enhanced: str, model_used: str) -> None:
+        self._is_enhancing = False
+        if self._closing:
+            return
         self._summary_panel.set_enhance_busy(False)
-        self._db.update_meeting(meeting_id, notes=enhanced)
+        if self._db.get_meeting(meeting_id, include_segments=False) is None:
+            return
+        try:
+            self._db.update_meeting(meeting_id, notes=enhanced)
+        except (sqlite3.IntegrityError, sqlite3.ProgrammingError):
+            return
         if self._current_meeting and self._current_meeting.id == meeting_id:
             self._current_meeting.notes = enhanced
-            self._summary_panel.set_notes(enhanced)
+            self._summary_panel.apply_enhanced_notes(enhanced)
         self._set_status(f"Notes enhanced ({model_used}).")
 
     def _on_enhance_error(self, message: str) -> None:
+        self._is_enhancing = False
+        if self._closing:
+            return
         self._summary_panel.set_enhance_busy(False)
         self._set_status(f"Enhance notes failed: {message}")
 
     def _start_qa_query(self, question: str) -> None:
-        if not self._current_meeting or self._current_meeting.id is None:
+        if self._is_asking_qa or not self._current_meeting or self._current_meeting.id is None:
             return
         self._flush_current_notes()
         meeting_id = self._current_meeting.id
         segs = list(self._current_meeting.segments)
         notes = self._current_meeting.notes
-        settings_copy = self._settings
+        settings_copy = replace(self._settings)
+        self._is_asking_qa = True
         self._summary_panel.set_qa_busy(True)
 
         def _worker() -> None:
@@ -1212,6 +1273,9 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_worker, daemon=True, name="AskMeetingWorker").start()
 
     def _on_qa_done(self, meeting_id: int, response: object) -> None:
+        self._is_asking_qa = False
+        if self._closing:
+            return
         self._summary_panel.set_qa_busy(False)
         if isinstance(response, QAResponse) and self._current_meeting and self._current_meeting.id == meeting_id:
             self._summary_panel.set_qa_response(response)
@@ -1255,20 +1319,32 @@ class MainWindow(QMainWindow):
         meeting = self._db.get_meeting(meeting_id, include_segments=True)
         if meeting is None:
             return
+        safe_name = (
+            "".join(ch if ch.isalnum() or ch in (" ", "-", "_") else "_" for ch in meeting.title[:40]).strip()
+            or "meeting"
+        )
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Export JSON Backup",
-            f"{meeting.title[:40]}.json",
+            f"{safe_name}.json",
             "JSON Backup (*.json)",
         )
         if path:
-            export_meeting(meeting, path, "json")
-            self._set_status(f"Exported backup: {path}")
+            try:
+                export_meeting(meeting, path, "json")
+                self._set_status(f"Exported backup: {path}")
+            except Exception as exc:
+                QMessageBox.critical(self, "Export Error", str(exc))
 
     def _on_settings_saved(self, new_settings: object) -> None:
         if not isinstance(new_settings, AppSettings):
             return
         self._settings = new_settings
+        self._tuning = compute_runtime_tuning(
+            self._hw,
+            requested_profile=self._settings.performance_profile,
+            preferred_compute_type=self._settings.whisper_compute_type,
+        )
         save_settings(self._settings)
         self._sidebar.update_privacy_status(
             self._settings.whisper_model,
@@ -1322,7 +1398,7 @@ class MainWindow(QMainWindow):
         thread.start()
 
     def _on_update_checked(self, info: object) -> None:
-        if not isinstance(info, UpdateInfo):
+        if self._closing or not isinstance(info, UpdateInfo):
             return
         if info.error:
             msg = self._i18n.t("updates_error")
@@ -1389,6 +1465,8 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_worker, daemon=True, name="BuiltinBenchmark").start()
 
     def _on_benchmark_done(self, metrics: dict) -> None:
+        if self._closing:
+            return
         msg = self._i18n.t(
             "benchmark_done",
             res_ms=metrics.get("res_ms", 0.0),
@@ -1431,6 +1509,21 @@ class MainWindow(QMainWindow):
         if self._pipeline_flush_thread is not None and self._pipeline_flush_thread.is_alive():
             self._pipeline_flush_thread.join(timeout=8.0)
             self._pipeline_flush_thread = None
+
+        # Drain queued segment signals emitted during final flush BEFORE closing SQLite
+        app = QApplication.instance()
+        if app is not None:
+            app.processEvents()
+
+        self._closing = True
+
+        if self._update_thread is not None and hasattr(self._update_thread, "isRunning"):
+            try:
+                if self._update_thread.isRunning():
+                    self._update_thread.quit()
+                    self._update_thread.wait(2000)
+            except Exception:
+                pass
 
         if self._tray:
             self._tray.hide()

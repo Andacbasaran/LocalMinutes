@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from localminutes.models import (
     ActionItem,
@@ -14,6 +17,86 @@ from localminutes.models import (
     TranscriptSegment,
     get_template_meta,
 )
+
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f\u0080-\u009f]+")
+_SAFE_BARE_YAML_TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_./-]*$")
+_YAML_RESERVED_WORDS = frozenset(
+    {"true", "false", "null", "yes", "no", "on", "off", "y", "n", "~"}
+)
+
+
+def _clean_yaml_text(value: str) -> str:
+    """Strip ASCII/C1 control characters and collapse newlines to a single space."""
+    return _CONTROL_CHAR_RE.sub(" ", str(value or "")).strip()
+
+
+def _yaml_scalar(value: str) -> str:
+    """Serialize a YAML string scalar safely via json.dumps after stripping control characters."""
+    return json.dumps(_clean_yaml_text(value), ensure_ascii=False)
+
+
+def _yaml_tag_scalar(tag: str) -> str:
+    """Keep simple Obsidian tags unquoted while json.dumps-quoting any special/injectable tag."""
+    clean = _clean_yaml_text(tag)
+    if (
+        clean
+        and _SAFE_BARE_YAML_TAG_RE.fullmatch(clean)
+        and clean.lower() not in _YAML_RESERVED_WORDS
+    ):
+        return clean
+    return json.dumps(clean, ensure_ascii=False)
+
+
+def _sanitize_srt_text(text: str) -> str:
+    """Prevent cue injection in SubRip (.srt) files by collapsing blank lines and '-->'."""
+    norm = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    norm = re.sub(r"\n{2,}", "\n", norm)
+    return norm.replace("-->", "->").strip()
+
+
+def _sanitize_vtt_speaker(speaker: str) -> str:
+    """Sanitize WebVTT <v speaker> voice tag against tag breakout and cue spoofing."""
+    clean = _CONTROL_CHAR_RE.sub(" ", str(speaker or "Speaker")).replace("-->", "->")
+    clean = clean.replace("&", "&amp;").replace("<", "&lt;").replace(">", "")
+    return clean.strip() or "Speaker"
+
+
+def _sanitize_vtt_text(text: str) -> str:
+    """Sanitize WebVTT cue text (collapse blank lines, neutralize '-->', escape '&' and '<')."""
+    norm = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    norm = re.sub(r"\n{2,}", "\n", norm)
+    norm = norm.replace("-->", "->")
+    norm = norm.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return norm.strip()
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    if value is None or isinstance(value, bool):
+        return default
+    try:
+        num = float(value)
+        if not math.isfinite(num):
+            return default
+        return max(0.0, num)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_str(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+    return str(value)
+
+
+def _safe_str_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return [cleaned] if cleaned else []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if item is not None and str(item).strip()]
+    return []
 
 
 def format_timestamp(seconds: float) -> str:
@@ -47,18 +130,19 @@ def format_markdown(meeting: Meeting, obsidian_frontmatter: bool = False) -> str
     lines: list[str] = []
 
     if obsidian_frontmatter:
-        safe_title = meeting.title.replace('"', '\\"')
+        clean_created = _clean_yaml_text(meeting.created_at)
+        date_part = clean_created[:10]
         lines.append("---")
-        lines.append(f'title: "{safe_title}"')
-        lines.append(f"date: {meeting.created_at[:10]}")
-        lines.append(f"created_at: {meeting.created_at}")
-        lines.append(f"duration: \"{format_timestamp(meeting.duration_sec)}\"")
-        lines.append(f"template: {meeting.template}")
-        lines.append(f"language: {meeting.language}")
+        lines.append(f"title: {_yaml_scalar(meeting.title)}")
+        lines.append(f"date: {_yaml_scalar(date_part)}")
+        lines.append(f"created_at: {_yaml_scalar(clean_created)}")
+        lines.append(f"duration: {_yaml_scalar(format_timestamp(meeting.duration_sec))}")
+        lines.append(f"template: {_yaml_scalar(meeting.template)}")
+        lines.append(f"language: {_yaml_scalar(meeting.language)}")
         if meeting.tags:
             lines.append("tags:")
             for tag in meeting.tags:
-                lines.append(f"  - {tag}")
+                lines.append(f"  - {_yaml_tag_scalar(tag)}")
         else:
             lines.append("tags: [localminutes, meeting]")
         lines.append("source: LocalMinutes")
@@ -228,7 +312,9 @@ def format_srt(meeting: Meeting) -> str:
         start = _format_srt_time(seg.start_sec)
         end_sec = seg.end_sec if seg.end_sec > seg.start_sec else seg.start_sec + 2.0
         end = _format_srt_time(end_sec)
-        blocks.append(f"{idx}\n{start} --> {end}\n{seg.speaker}: {seg.text.strip()}\n")
+        safe_speaker = _CONTROL_CHAR_RE.sub(" ", str(seg.speaker or "Speaker")).replace("-->", "->").strip()
+        safe_body = _sanitize_srt_text(seg.text)
+        blocks.append(f"{idx}\n{start} --> {end}\n{safe_speaker}: {safe_body}\n")
     return "\n".join(blocks)
 
 
@@ -239,7 +325,9 @@ def format_vtt(meeting: Meeting) -> str:
         start = _format_vtt_time(seg.start_sec)
         end_sec = seg.end_sec if seg.end_sec > seg.start_sec else seg.start_sec + 2.0
         end = _format_vtt_time(end_sec)
-        blocks.append(f"{idx}\n{start} --> {end}\n<v {seg.speaker}>{seg.text.strip()}\n")
+        safe_speaker = _sanitize_vtt_speaker(seg.speaker)
+        safe_body = _sanitize_vtt_text(seg.text)
+        blocks.append(f"{idx}\n{start} --> {end}\n<v {safe_speaker}>{safe_body}\n")
     return "\n".join(blocks).rstrip() + "\n"
 
 
@@ -249,61 +337,79 @@ def format_json(meeting: Meeting) -> str:
 
 
 def parse_meeting_json(raw_json: str) -> Meeting:
-    """Parse a JSON backup exported by LocalMinutes back into a Meeting model."""
+    """Parse a JSON backup exported by LocalMinutes back into a Meeting model safely."""
     data = json.loads(raw_json)
-    if not isinstance(data, dict) or not data.get("title"):
+    if not isinstance(data, dict):
+        raise ValueError("Invalid LocalMinutes JSON backup: root payload must be a JSON object.")
+    raw_title = data.get("title")
+    if not isinstance(raw_title, str) or not raw_title.strip():
         raise ValueError("Invalid LocalMinutes JSON backup: missing meeting 'title'.")
 
+    now_iso = datetime.now().isoformat(timespec="seconds")
     summary_raw = data.get("summary")
     summary = None
     if isinstance(summary_raw, dict):
         summary = SummaryResult(
-            overview=str(summary_raw.get("overview", "")),
-            key_points=list(summary_raw.get("key_points", [])),
-            decisions=list(summary_raw.get("decisions", [])),
-            action_items=list(summary_raw.get("action_items", [])),
-            template=str(summary_raw.get("template", "meeting")),
-            raw_markdown=str(summary_raw.get("raw_markdown", "")),
-            model_used=str(summary_raw.get("model_used", "")),
-            generated_at=str(summary_raw.get("generated_at", "")),
+            overview=_safe_str(summary_raw.get("overview"), ""),
+            key_points=_safe_str_list(summary_raw.get("key_points")),
+            decisions=_safe_str_list(summary_raw.get("decisions")),
+            action_items=_safe_str_list(summary_raw.get("action_items")),
+            template=_safe_str(summary_raw.get("template"), "meeting") or "meeting",
+            raw_markdown=_safe_str(summary_raw.get("raw_markdown"), ""),
+            model_used=_safe_str(summary_raw.get("model_used"), ""),
+            generated_at=_safe_str(summary_raw.get("generated_at"), ""),
         )
 
     segments: list[TranscriptSegment] = []
-    for raw_seg in data.get("segments", []) or []:
-        if isinstance(raw_seg, dict) and str(raw_seg.get("text", "")).strip():
+    raw_segments = data.get("segments")
+    if isinstance(raw_segments, list):
+        for raw_seg in raw_segments:
+            if not isinstance(raw_seg, dict):
+                continue
+            seg_text = _safe_str(raw_seg.get("text"), "").strip()
+            if not seg_text:
+                continue
+            start_s = _safe_float(raw_seg.get("start_sec"), 0.0)
+            end_s = _safe_float(raw_seg.get("end_sec"), start_s)
+            if end_s < start_s:
+                end_s = start_s
             segments.append(
                 TranscriptSegment(
-                    speaker=str(raw_seg.get("speaker", "You")),
-                    text=str(raw_seg.get("text", "")).strip(),
-                    start_sec=float(raw_seg.get("start_sec", 0.0)),
-                    end_sec=float(raw_seg.get("end_sec", 0.0)),
+                    speaker=_safe_str(raw_seg.get("speaker"), "You").strip() or "You",
+                    text=seg_text,
+                    start_sec=start_s,
+                    end_sec=end_s,
                     is_bookmarked=bool(raw_seg.get("is_bookmarked", False)),
-                    created_at=str(
-                        raw_seg.get("created_at") or datetime.now().isoformat(timespec="seconds")
-                    ),
+                    created_at=_safe_str(raw_seg.get("created_at"), now_iso) or now_iso,
                 )
             )
 
     action_items: list[ActionItem] = []
-    for raw_ai in data.get("action_items", []) or []:
-        if isinstance(raw_ai, dict) and str(raw_ai.get("text", "")).strip():
+    raw_action_items = data.get("action_items")
+    if isinstance(raw_action_items, list):
+        for raw_ai in raw_action_items:
+            if not isinstance(raw_ai, dict):
+                continue
+            ai_text = _safe_str(raw_ai.get("text"), "").strip()
+            if not ai_text:
+                continue
             action_items.append(
                 ActionItem(
-                    text=str(raw_ai.get("text", "")).strip(),
-                    assignee=str(raw_ai.get("assignee", "")),
-                    due_date=str(raw_ai.get("due_date", "")),
+                    text=ai_text,
+                    assignee=_safe_str(raw_ai.get("assignee"), ""),
+                    due_date=_safe_str(raw_ai.get("due_date"), ""),
                     completed=bool(raw_ai.get("completed", False)),
                 )
             )
 
     return Meeting(
-        title=str(data["title"]).strip(),
-        created_at=str(data.get("created_at") or datetime.now().isoformat(timespec="seconds")),
-        duration_sec=float(data.get("duration_sec", 0.0)),
-        language=str(data.get("language", "auto")),
-        template=str(data.get("template", "meeting")),
-        tags=[str(t).strip() for t in (data.get("tags") or []) if str(t).strip()],
-        notes=str(data.get("notes", "")),
+        title=raw_title.strip(),
+        created_at=_safe_str(data.get("created_at"), now_iso) or now_iso,
+        duration_sec=_safe_float(data.get("duration_sec"), 0.0),
+        language=_safe_str(data.get("language"), "auto") or "auto",
+        template=_safe_str(data.get("template"), "meeting") or "meeting",
+        tags=_safe_str_list(data.get("tags")),
+        notes=_safe_str(data.get("notes"), ""),
         summary=summary,
         segments=segments,
         action_items=action_items,

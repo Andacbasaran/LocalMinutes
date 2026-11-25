@@ -6,6 +6,7 @@ import html
 from typing import Optional
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -61,6 +62,8 @@ class SummaryPanel(QWidget):
         self._action_items: list[ActionItem] = []
         self._segments: list[TranscriptSegment] = []
         self._notes_dirty = False
+        self._is_summarizing = False
+        self._is_qa_busy = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 10, 12, 10)
@@ -273,6 +276,22 @@ class SummaryPanel(QWidget):
         self._notes_edit.setPlainText(text)
         self._notes_edit.blockSignals(False)
 
+    def apply_enhanced_notes(self, text: str) -> None:
+        """Apply enhanced notes via a single QTextCursor edit block so Ctrl+Z undo is preserved."""
+        if self._notes_debounce.isActive():
+            self._notes_debounce.stop()
+        self._notes_dirty = False
+        self._notes_edit.blockSignals(True)
+        try:
+            cursor = self._notes_edit.textCursor()
+            cursor.beginEditBlock()
+            cursor.select(QTextCursor.SelectionType.Document)
+            cursor.insertText(text)
+            cursor.endEditBlock()
+            self._notes_edit.setTextCursor(cursor)
+        finally:
+            self._notes_edit.blockSignals(False)
+
     def set_enhance_busy(self, busy: bool) -> None:
         self._enhance_btn.setEnabled(not busy)
 
@@ -351,16 +370,23 @@ class SummaryPanel(QWidget):
         )
 
     def _ask_preset(self, text: str) -> None:
+        if self._is_qa_busy:
+            return
         self._qa_input.setText(text)
         self._submit_qa()
 
     def _submit_qa(self) -> None:
+        if self._is_qa_busy:
+            return
         q = self._qa_input.text().strip()
         if q:
             self.qa_requested.emit(q)
 
     def set_qa_busy(self, busy: bool) -> None:
+        self._is_qa_busy = bool(busy)
         self._qa_ask_btn.setEnabled(not busy)
+        for btn in self._qa_quick_btns:
+            btn.setEnabled(not busy)
         self._qa_ask_btn.setText(self._i18n.t("qa_asking" if busy else "qa_ask_btn"))
 
     def set_qa_response(self, response: Optional[QAResponse]) -> None:
@@ -600,9 +626,12 @@ class SummaryPanel(QWidget):
         self.template_changed.emit(self.current_template())
 
     def _emit_summarize(self) -> None:
+        if self._is_summarizing:
+            return
         self.summarize_requested.emit(self.current_template())
 
     def set_busy(self, busy: bool, message: str = "") -> None:
+        self._is_summarizing = bool(busy)
         self._gen_btn.setEnabled(not busy)
         self._template_combo.setEnabled(not busy)
         if busy:
@@ -703,7 +732,10 @@ class SummaryPanel(QWidget):
         if clipboard is not None:
             clipboard.setText("\n\n".join(lines))
             self._copy_btn.setText(self._i18n.t("btn_copied"))
-            QTimer.singleShot(1500, lambda: self._copy_btn.setText(self._i18n.t("btn_copy")))
+            QTimer.singleShot(1500, self, self._reset_copy_button_label)
+
+    def _reset_copy_button_label(self) -> None:
+        self._copy_btn.setText(self._i18n.t("btn_copy"))
 
     def retranslate(self, i18n: LanguageManager) -> None:
         self._i18n = i18n

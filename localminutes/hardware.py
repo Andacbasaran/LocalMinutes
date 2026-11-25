@@ -184,16 +184,15 @@ def detect_physical_cores(logical_cores: int) -> int:
             from ctypes import wintypes
 
             kernel32 = ctypes.windll.kernel32
+            get_lpi = kernel32.GetLogicalProcessorInformationEx
+            get_lpi.argtypes = [wintypes.DWORD, ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD)]
+            get_lpi.restype = wintypes.BOOL
             relation_processor_core = 0
             buf_len = wintypes.DWORD(0)
-            kernel32.GetLogicalProcessorInformationEx(
-                relation_processor_core, None, ctypes.byref(buf_len)
-            )
+            get_lpi(relation_processor_core, None, ctypes.byref(buf_len))
             if buf_len.value > 0:
                 buf = ctypes.create_string_buffer(buf_len.value)
-                ok = kernel32.GetLogicalProcessorInformationEx(
-                    relation_processor_core, buf, ctypes.byref(buf_len)
-                )
+                ok = get_lpi(relation_processor_core, buf, ctypes.byref(buf_len))
                 if ok:
                     raw = buf.raw
                     offset = 0
@@ -223,8 +222,11 @@ def detect_isa_features(arch: Optional[str] = None) -> Tuple[str, ...]:
     if sys.platform == "win32":
         try:
             import ctypes
+            from ctypes import wintypes
 
             is_feat = ctypes.windll.kernel32.IsProcessorFeaturePresent
+            is_feat.argtypes = [wintypes.DWORD]
+            is_feat.restype = wintypes.BOOL
             win_flags = (
                 (10, "sse2"),
                 (37, "sse4_1"),
@@ -232,7 +234,7 @@ def detect_isa_features(arch: Optional[str] = None) -> Tuple[str, ...]:
                 (39, "avx"),
                 (40, "avx2"),
                 (41, "avx512f"),
-                (29, "neon"),
+                (19, "neon"),  # PF_ARM_NEON_INSTRUCTIONS_AVAILABLE
                 (43, "dotprod"),
             )
             for code, name in win_flags:
@@ -450,7 +452,18 @@ def get_writable_data_dir(override: Optional[str] = None) -> Path:
         xdg = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
         base = Path(xdg) / "localminutes"
 
-    base.mkdir(parents=True, exist_ok=True)
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        import tempfile
+
+        base = Path(tempfile.gettempdir()) / "localminutes"
+        base.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix":
+        try:
+            os.chmod(base, 0o700)
+        except OSError:
+            pass
     return base
 
 
@@ -472,9 +485,13 @@ def get_ct2_safe_path(model_dir: str) -> str:
     if sys.platform == "win32":
         try:
             import ctypes
+            from ctypes import wintypes
 
+            get_short = ctypes.windll.kernel32.GetShortPathNameW
+            get_short.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+            get_short.restype = wintypes.DWORD
             buf = ctypes.create_unicode_buffer(1024)
-            res = ctypes.windll.kernel32.GetShortPathNameW(model_dir, buf, len(buf))
+            res = get_short(model_dir, buf, len(buf))
             if 0 < res < len(buf):
                 short_path = buf.value
                 short_path.encode("ascii")

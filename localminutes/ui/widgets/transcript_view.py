@@ -242,18 +242,24 @@ class _SegmentCard(QFrame):
 
     @staticmethod
     def _render_highlighted_html(text: str, query: str) -> str:
-        escaped = html.escape(text)
         if not query:
-            return f"<div style='line-height:1.42;'>{escaped}</div>"
-        pattern = re.compile(re.escape(html.escape(query)), re.IGNORECASE)
-        highlighted = pattern.sub(
-            lambda m: (
+            return f"<div style='line-height:1.42;'>{html.escape(text)}</div>"
+        # Match on RAW unescaped text and escape each slice individually so searching
+        # 'amp', 'lt', 'quot', etc. never corrupts HTML entities like '&amp;' or '&lt;'!
+        pattern = re.compile(re.escape(query), re.IGNORECASE)
+        parts: list[str] = []
+        last_end = 0
+        for m in pattern.finditer(text):
+            if m.start() > last_end:
+                parts.append(html.escape(text[last_end : m.start()]))
+            parts.append(
                 "<span style='background-color:rgba(245,158,11,0.34); color:#FDE68A; "
-                f"border-radius:3px; padding:0 2px;'>{m.group(0)}</span>"
-            ),
-            escaped,
-        )
-        return f"<div style='line-height:1.42;'>{highlighted}</div>"
+                f"border-radius:3px; padding:0 2px;'>{html.escape(m.group(0))}</span>"
+            )
+            last_end = m.end()
+        if last_end < len(text):
+            parts.append(html.escape(text[last_end:]))
+        return f"<div style='line-height:1.42;'>{''.join(parts)}</div>"
 
     def compute_height_for_width(self, card_width: int) -> int:
         """Compute exact vertical size so multi-line text never clips in QListWidget."""
@@ -282,6 +288,14 @@ class TranscriptView(QWidget):
         self._active_filter: str = "all"  # "all" | "bookmarked" | <speaker_name>
         self._flash_segment_id: Optional[int] = None
         self._filter_buttons: list[QPushButton] = []
+        self._resize_debounce = QTimer(self)
+        self._resize_debounce.setSingleShot(True)
+        self._resize_debounce.setInterval(80)
+        self._resize_debounce.timeout.connect(self._recalculate_card_sizes)
+        self._search_debounce = QTimer(self)
+        self._search_debounce.setSingleShot(True)
+        self._search_debounce.setInterval(150)
+        self._search_debounce.timeout.connect(self._render)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 8, 10)
@@ -410,6 +424,13 @@ class TranscriptView(QWidget):
 
     def set_segments(self, segments: list[TranscriptSegment]) -> None:
         self._segments = list(segments)
+        # Clear previous meeting's filter so newly opened meetings never appear empty
+        if self._filter_query or self._active_filter != "all":
+            self._filter_query = ""
+            self._active_filter = "all"
+            self._search_box.blockSignals(True)
+            self._search_box.clear()
+            self._search_box.blockSignals(False)
         self._rebuild_filter_pills()
         self._render()
 
@@ -465,12 +486,12 @@ class TranscriptView(QWidget):
                 self._list.setCurrentRow(row)
                 break
 
-        QTimer.singleShot(1800, self._clear_citation_flash)
+        QTimer.singleShot(1800, self, self._clear_citation_flash)
 
     def _clear_citation_flash(self) -> None:
         if self._flash_segment_id is not None:
             self._flash_segment_id = None
-            self._render()
+            self._render(preserve_scroll=True)
 
     def update_segment_local(
         self,
@@ -489,12 +510,12 @@ class TranscriptView(QWidget):
                     seg.is_bookmarked = is_bookmarked
                 break
         self._rebuild_filter_pills()
-        self._render()
+        self._render(preserve_scroll=True)
 
     def remove_segment_local(self, segment_id: int) -> None:
         self._segments = [s for s in self._segments if s.id != segment_id]
         self._rebuild_filter_pills()
-        self._render()
+        self._render(preserve_scroll=True)
 
     def _set_filter_mode(self, mode: str) -> None:
         self._active_filter = mode
@@ -503,7 +524,7 @@ class TranscriptView(QWidget):
 
     def _on_filter_changed(self, text: str) -> None:
         self._filter_query = text.strip().lower()
-        self._render()
+        self._search_debounce.start()
 
     def _matches_filter(self, seg: TranscriptSegment) -> bool:
         if self._active_filter == "bookmarked" and not seg.is_bookmarked:
@@ -520,13 +541,17 @@ class TranscriptView(QWidget):
         vp_w = self._list.viewport().width() if self._list.viewport() else 420
         return max(260, vp_w - 18)
 
-    def _render(self) -> None:
+    def _render(self, preserve_scroll: bool = False) -> None:
+        vbar = self._list.verticalScrollBar()
+        saved_scroll = vbar.value() if (preserve_scroll and vbar is not None) else None
         self._list.clear()
         for seg in self._segments:
             if self._matches_filter(seg):
                 self._add_card_item(seg)
         self._update_stats()
         self._update_count_label()
+        if saved_scroll is not None and vbar is not None:
+            vbar.setValue(min(saved_scroll, vbar.maximum()))
 
     def _add_card_item(self, seg: TranscriptSegment) -> None:
         is_flash = self._flash_segment_id is not None and seg.id == self._flash_segment_id
@@ -549,7 +574,7 @@ class TranscriptView(QWidget):
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)
-        self._recalculate_card_sizes()
+        self._resize_debounce.start()
 
     def _recalculate_card_sizes(self) -> None:
         w = self._card_target_width()
